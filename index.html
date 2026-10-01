@@ -3301,6 +3301,351 @@
       openSummaryReport, openLiveStats, promptPassword, openAdminPanel,
       openGoogleSheetsPanel
     };
+        /* ============================================================
+       INIT — FIREBASE + DOM READY
+       ============================================================ */
+    function initFirebase() {
+      if (!window.FB) {
+        console.error('Firebase not loaded yet');
+        return false;
+      }
+      try {
+        setupAuth();
+        console.log('✅ Auth setup complete');
+        return true;
+      } catch (e) {
+        console.error('setupAuth failed:', e);
+        return false;
+      }
+    }
+
+    // Robust init: try immediately, then poll every 100ms
+    (function bootstrap() {
+      if (window.FB) {
+        initFirebase();
+      } else {
+        let attempts = 0;
+        const check = setInterval(() => {
+          attempts++;
+          if (window.FB) {
+            clearInterval(check);
+            initFirebase();
+          } else if (attempts > 100) {
+            clearInterval(check);
+            console.error('❌ Firebase SDK never loaded after 10s');
+            const msgEl = document.getElementById('authMsg');
+            if (msgEl) msgEl.textContent = 'Firebase failed to load. Refresh the page.';
+          }
+        }, 100);
+      }
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      loadSearchState();
+      pageSize = parseInt(localStorage.getItem('roza_page_size') || '35', 10);
+      const ps = document.getElementById('pageSizeSelect');
+      if (ps) ps.value = pageSize;
+
+      const dark = localStorage.getItem('roza_darkmode') === 'true';
+      const dt = document.getElementById('darkModeToggle');
+      if (dt) {
+        dt.checked = dark;
+        if (dark) document.body.classList.add('dark-mode');
+      }
+
+      const collapsed = localStorage.getItem('roza_sidebar_state') === 'collapsed';
+      if (collapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('sidebarToggle').textContent = '▶';
+      }
+
+      if (localStorage.getItem('roza_form_state') === 'open') showAddForm();
+
+      const recDate = document.getElementById('recordDate');
+      if (recDate) recDate.textContent = todayDDMMYYYY();
+
+      initSearchBarControls();
+      makeDraggable();
+      makeResizable();
+      applySearchState();
+
+      refreshAddressFilter();
+      renderTable();
+      updateTelegramStatus();
+
+      const savedSync = localStorage.getItem(LAST_SYNC_KEY);
+      if (savedSync) {
+        lastSyncTime = new Date(savedSync);
+        const el = document.getElementById('lastSyncTop');
+        if (el) el.textContent = 'Last Sync: ' + lastSyncTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      }
+
+      // Dark mode
+      if (dt) {
+        dt.addEventListener('change', (e) => {
+          document.body.classList.toggle('dark-mode', e.target.checked);
+          localStorage.setItem('roza_darkmode', e.target.checked);
+        });
+      }
+
+      // Sidebar toggle
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+          const sidebar = document.getElementById('sidebar');
+          sidebar.classList.toggle('collapsed');
+          const isCollapsed = sidebar.classList.contains('collapsed');
+          sidebarToggle.textContent = isCollapsed ? '▶' : '◀';
+          localStorage.setItem('roza_sidebar_state', isCollapsed ? 'collapsed' : 'expanded');
+        });
+      }
+
+      // Sidebar items
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          handleSidebarAction(item.dataset.action);
+        });
+      });
+
+      // Footer links
+      document.querySelectorAll('.footer-links a').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          handleSidebarAction(link.dataset.action);
+        });
+      });
+
+      // Add customer
+      const addBtn = document.getElementById('addCustomerTopBtn');
+      if (addBtn) addBtn.addEventListener('click', showAddForm);
+
+      const closeFormBtn = document.getElementById('closeFormBtn');
+      if (closeFormBtn) closeFormBtn.addEventListener('click', hideAddForm);
+
+      const cancelFormBtn = document.getElementById('cancelFormBtn');
+      if (cancelFormBtn) cancelFormBtn.addEventListener('click', () => { resetForm(); hideAddForm(); });
+
+      const custAddr = document.getElementById('custAddress');
+      if (custAddr) {
+        custAddr.addEventListener('change', (e) => {
+          const g = document.getElementById('customAddressGroup');
+          if (g) g.style.display = e.target.value === 'Other' ? 'flex' : 'none';
+        });
+      }
+      const custSrc = document.getElementById('custSource');
+      if (custSrc) {
+        custSrc.addEventListener('change', (e) => {
+          const g = document.getElementById('customSourceGroup');
+          if (g) g.style.display = e.target.value === 'Other' ? 'flex' : 'none';
+        });
+      }
+      const custNameInp = document.getElementById('custName');
+      if (custNameInp) {
+        custNameInp.addEventListener('input', (e) => {
+          const pos = e.target.selectionStart;
+          e.target.value = titleCase(e.target.value);
+          e.target.setSelectionRange(pos, pos);
+        });
+      }
+
+      // Save customer
+      const saveCustBtn = document.getElementById('saveCustomerBtn');
+      if (saveCustBtn) {
+        saveCustBtn.addEventListener('click', () => {
+          const name = document.getElementById('custName').value.trim();
+          if (!name) { showToast('Customer name is required.', 'error'); return; }
+          const addressVal = document.getElementById('custAddress').value;
+          const address = addressVal === 'Other' ? document.getElementById('custCustomAddress').value.trim() : addressVal;
+          const sourceVal = document.getElementById('custSource').value;
+          const source = sourceVal === 'Other' ? document.getElementById('custCustomSource').value.trim() : sourceVal;
+          const newCustomer = {
+            id: generateId(),
+            dateAdded: todayDDMMYYYY(),
+            name: titleCase(name),
+            phone: document.getElementById('custPhone').value.trim(),
+            address: address,
+            due: Math.max(0, parseInt(document.getElementById('custDue').value, 10) || 0),
+            paid: Math.max(0, parseInt(document.getElementById('custPaid').value, 10) || 0),
+            source: source,
+            note: document.getElementById('custNote').value,
+            transactionHistory: []
+          };
+          if (newCustomer.due > 0 || newCustomer.paid > 0) {
+            logTxn(newCustomer, {
+              type: newCustomer.due > 0 ? 'Due Added' : 'Payment Received',
+              amount: newCustomer.due > 0 ? newCustomer.due : newCustomer.paid,
+              note: 'Initial record created'
+            });
+          }
+          customers.push(newCustomer);
+          saveData();
+          refreshAddressFilter();
+          renderTable();
+          resetForm();
+          hideAddForm();
+          showToast('Customer added successfully.', 'success');
+        });
+      }
+
+      // Search and filters
+      const gs = document.getElementById('globalSearch');
+      if (gs) gs.addEventListener('input', () => { currentPage = 1; renderTable(); });
+
+      const fAddr = document.getElementById('filterAddress');
+      if (fAddr) fAddr.addEventListener('change', () => { currentPage = 1; renderTable(); });
+
+      const fStatus = document.getElementById('filterStatus');
+      if (fStatus) fStatus.addEventListener('change', () => { currentPage = 1; renderTable(); });
+
+      const fSource = document.getElementById('filterSource');
+      if (fSource) fSource.addEventListener('change', () => { currentPage = 1; renderTable(); });
+
+      // Page size
+      const pageSizeSel = document.getElementById('pageSizeSelect');
+      if (pageSizeSel) {
+        pageSizeSel.addEventListener('change', (e) => {
+          pageSize = parseInt(e.target.value, 10);
+          localStorage.setItem('roza_page_size', pageSize);
+          currentPage = 1;
+          renderTable();
+        });
+      }
+
+      // Print buttons
+      const pfBtn = document.getElementById('printFilteredBtn');
+      if (pfBtn) pfBtn.addEventListener('click', printFilteredReport);
+
+      const mrBtn = document.getElementById('manualReportBtn');
+      if (mrBtn) mrBtn.addEventListener('click', printManualReport);
+
+      // Table sorting
+      document.querySelectorAll('#customerTable th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.sort;
+          if (sortColumn === col) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortColumn = col;
+            sortDirection = 'asc';
+          }
+          document.querySelectorAll('#customerTable th .sort-arrow').forEach(s => s.textContent = '');
+          th.querySelector('.sort-arrow').textContent = sortDirection === 'asc' ? '▲' : '▼';
+          renderTable();
+        });
+      });
+
+      // Backup button
+      const downloadTopBtn = document.getElementById('downloadBackupTop');
+      if (downloadTopBtn) {
+        downloadTopBtn.addEventListener('click', () => {
+          const data = JSON.stringify(customers, null, 2);
+          const blob = new Blob([data], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `RGCE_SparkDesk_Backup_${new Date().toISOString().slice(0,10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          lastBackupDownload = Date.now();
+          localStorage.setItem(LAST_LOCAL_DOWNLOAD_KEY, lastBackupDownload);
+          downloadTopBtn.innerHTML = '<i class="fas fa-download"></i> Backup';
+          downloadTopBtn.style.borderColor = '';
+          downloadTopBtn.style.color = '';
+          showToast('Backup downloaded.', 'success');
+        });
+      }
+
+      const lastBackup = localStorage.getItem(LAST_LOCAL_DOWNLOAD_KEY);
+      if (lastBackup && Date.now() - parseInt(lastBackup, 10) > 86400000 && downloadTopBtn) {
+        downloadTopBtn.style.borderColor = '#ff8182';
+        downloadTopBtn.style.color = '#ff8182';
+        downloadTopBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> BACKUP DUE';
+      }
+
+      // Telegram backup
+      const tgBtn = document.getElementById('telegramBackupNow');
+      if (tgBtn) tgBtn.addEventListener('click', sendTelegramBackup);
+
+      // Last sync click
+      const lastSyncEl = document.getElementById('lastSyncTop');
+      if (lastSyncEl) {
+        lastSyncEl.addEventListener('click', () => { syncToGoogleSheets(false); });
+      }
+
+      // Cloud sync button
+      const cloudSyncBtn = document.getElementById('forceCloudSyncBtn');
+      if (cloudSyncBtn) {
+        cloudSyncBtn.addEventListener('click', () => {
+          if (!currentUser) { showToast('Login first.', 'warning'); return; }
+          cloudPush(false);
+        });
+      }
+
+      // Admin panel
+      const adminLink = document.getElementById('adminPanelLink');
+      if (adminLink) {
+        adminLink.addEventListener('click', () => {
+          promptPassword('Enter master password', MASTER_PASSWORD, openAdminPanel);
+        });
+      }
+
+      // Live clock
+      setInterval(() => {
+        const el = document.getElementById('liveTimeBadge');
+        if (el) el.textContent = new Date().toLocaleTimeString();
+      }, 1000);
+
+      // Enter key nav in form
+      const addPanel = document.getElementById('addCustomerPanel');
+      if (addPanel) {
+        addPanel.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            const inputs = [...document.querySelectorAll('#addCustomerPanel input:not([type="hidden"]), #addCustomerPanel select, #addCustomerPanel textarea')];
+            const idx = inputs.indexOf(e.target);
+            if (idx < inputs.length - 1) inputs[idx + 1].focus();
+            else {
+              const sBtn = document.getElementById('saveCustomerBtn');
+              if (sBtn) sBtn.click();
+            }
+          }
+        });
+      }
+
+      renderTable();
+
+      // Auto daily telegram backup
+      const lastAutoBackup = localStorage.getItem('roza_last_auto_backup');
+      if (customers.length > 0 && (!lastAutoBackup || Date.now() - parseInt(lastAutoBackup, 10) > 86400000)) {
+        if (telegramToken && telegramChatId) {
+          sendTelegramBackup().then(() => {
+            localStorage.setItem('roza_last_auto_backup', Date.now().toString());
+          });
+        }
+      }
+
+      setTimeout(() => {
+        showToast('Welcome to RGCE SparkDesk v1.5 Cloud!', 'info');
+      }, 500);
+
+      window.addEventListener('online', () => {
+        updateCloudBadge('syncing', 'Reconnecting…');
+        if (currentUser) cloudPush(true);
+      });
+      window.addEventListener('offline', () => {
+        updateCloudBadge('offline', 'Cloud: Offline');
+      });
+    });
+
+    window.forceCloudSync = () => {
+      if (!currentUser) { showToast('Login first.', 'warning'); return; }
+      cloudPush(false);
+    };
+    window.closeModal = closeModal;
+    window.showAddForm = showAddForm;
     })();
   </script>
 </body>
