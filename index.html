@@ -1,0 +1,3321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGCE SparkDesk – Customer Management System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg: #f4f5f7; --panel: #ffffff; --panel-alt: #f6f8fa;
+      --border: #d0d7de; --border-strong: #9ca3af;
+      --text: #1f2328; --muted: #57606a; --link: #0969da;
+      --primary: #1f4e79; --primary-hover: #163d5e; --primary-light: #f0f6fc;
+      --success: #1a7f37; --success-hover: #166b2e; --success-bg: #dafbe1;
+      --danger: #cf222e; --danger-bg: #ffebe9;
+      --warning: #bf8700; --warning-bg: #fff8c5;
+      --gold: #d4a72c; --input-bg: #ffffff; --input-focus: #0969da;
+      --header-bg: #1f4e79; --header-text: #ffffff;
+      --footer-bg: #24292f; --footer-text: #c9d1d9; --footer-muted: #8b949e;
+      --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.06);
+      --shadow-md: 0 4px 12px rgba(31, 35, 40, 0.10);
+      --shadow-lg: 0 8px 24px rgba(31, 35, 40, 0.14);
+    }
+    body.dark-mode {
+      --bg: #0d1117; --panel: #161b22; --panel-alt: #1c2128;
+      --border: #30363d; --border-strong: #484f58;
+      --text: #e6edf3; --muted: #8b949e; --link: #58a6ff;
+      --primary: #1f6feb; --primary-hover: #388bfd; --primary-light: #132030;
+      --success: #3fb950; --success-hover: #56d364; --success-bg: #12261e;
+      --danger: #f85149; --danger-bg: #2a1314;
+      --warning: #d29922; --warning-bg: #2a2010;
+      --input-bg: #0d1117; --input-focus: #58a6ff;
+      --footer-bg: #010409; --footer-text: #c9d1d9; --footer-muted: #8b949e;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;
+        -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+    input, textarea, select, .print-area, .print-area * {
+      -webkit-user-select: text !important; -moz-user-select: text !important;
+      -ms-user-select: text !important; user-select: text !important;
+    }
+    img, i, .fa, .fab, .fas { -webkit-user-drag: none; pointer-events: none; }
+    html { -webkit-touch-callout: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      font-size: 15px; background: var(--bg); color: var(--text); line-height: 1.5;
+      min-height: 100vh; display: flex; flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ============ LOGIN SCREEN ============ */
+    #authOverlay {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg, #1f4e79 0%, #0d2235 100%);
+      z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    #authOverlay .auth-card {
+      background: #fff; border-radius: 10px; padding: 32px 28px;
+      max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      font-family: inherit; color: #1f2328;
+    }
+    body.dark-mode #authOverlay .auth-card { background: #161b22; color: #e6edf3; }
+    #authOverlay .auth-logo { text-align: center; font-size: 40px; color: #1f4e79; margin-bottom: 8px; }
+    #authOverlay h2 { text-align: center; margin-bottom: 4px; font-size: 22px; }
+    #authOverlay .auth-sub { text-align: center; color: #57606a; font-size: 13px; margin-bottom: 22px; }
+    #authOverlay .form-group { margin-bottom: 12px; }
+    #authOverlay label {
+      display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    #authOverlay input {
+      width: 100%; padding: 11px 14px; border: 1px solid #9ca3af; border-radius: 6px;
+      font-size: 14px; background: #fff; color: #1f2328; outline: none; font-family: inherit;
+    }
+    #authOverlay input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,0.15); }
+    #authOverlay .auth-btn {
+      width: 100%; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 6px;
+      border: none; cursor: pointer; font-family: inherit; margin-bottom: 8px;
+    }
+    #authOverlay .auth-btn.primary { background: #1f4e79; color: #fff; }
+    #authOverlay .auth-btn.primary:hover { background: #163d5e; }
+    #authOverlay .auth-btn.secondary {
+      background: transparent; color: #57606a; border: 1px solid #d0d7de;
+    }
+    #authOverlay .auth-btn.secondary:hover { background: #f6f8fa; }
+    #authMsg { margin-top: 12px; font-size: 12px; text-align: center; min-height: 18px; color: #57606a; }
+    #authMsg.error { color: #cf222e; }
+    #authMsg.success { color: #1a7f37; }
+    #authOverlay .auth-footer {
+      margin-top: 18px; padding-top: 14px; border-top: 1px solid #d0d7de;
+      font-size: 11px; color: #57606a; text-align: center; line-height: 1.5;
+    }
+
+    /* ============ CLOUD BADGE ============ */
+    .cloud-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 3px 10px; background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+      color: #c9d1d9; margin-left: 6px;
+    }
+    .cloud-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #57606a; flex-shrink: 0; }
+    .cloud-badge.online { color: #7ee787; border-color: #2ea043; background: rgba(46,160,67,0.15); }
+    .cloud-badge.online .dot { background: #3fb950; animation: pulseDot 1.5s infinite; }
+    .cloud-badge.syncing { color: #f0b849; border-color: #bf8700; background: rgba(191,135,0,0.15); }
+    .cloud-badge.syncing .dot { background: #d29922; animation: pulseDot 0.8s infinite; }
+    .cloud-badge.offline { color: #ff8182; border-color: #cf222e; background: rgba(207,34,46,0.15); }
+    .cloud-badge.offline .dot { background: #f85149; }
+    @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+
+    /* ============ GOV STRIP ============ */
+    .gov-strip {
+      background: var(--header-bg); color: var(--header-text);
+      border-bottom: 3px solid var(--gold); padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; font-size: 13px;
+    }
+    .gov-strip-left, .gov-strip-center, .gov-strip-right {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .gov-strip-left i { color: var(--gold); }
+    .sync-link { cursor: pointer; color: #c9d1d9; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+    .sync-link:hover { color: #fff; }
+    .telegram-status-box {
+      display: flex; align-items: center; gap: 8px; padding: 4px 10px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px; font-size: 12px; color: #c9d1d9;
+    }
+    .telegram-status-box i { color: #7fb8e8; }
+    .btn-top {
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.08); color: #fff;
+      border: 1px solid rgba(255,255,255,0.18); border-radius: 4px;
+      cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+    }
+    .btn-top:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.32); }
+    .btn-top i { margin-right: 4px; }
+    .dark-toggle-label {
+      display: flex; align-items: center; gap: 6px; font-size: 12px; color: #c9d1d9;
+      cursor: pointer; padding: 4px 8px; background: rgba(255,255,255,0.05); border-radius: 4px;
+    }
+    .dark-toggle-label input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--gold); cursor: pointer; }
+
+    /* ============ HEADER ============ */
+    .official-header {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      margin: 16px 20px 0; padding: 18px 22px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);
+    }
+    .header-center { flex: 1; text-align: center; min-width: 200px; }
+    .shop-name { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; line-height: 1.2; }
+    .tagline { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .double-rule { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); height: 4px; margin-top: 10px; width: 100%; }
+    .record-block {
+      text-align: right; font-size: 11px; color: var(--muted);
+      border: 1px solid var(--border); padding: 8px 12px;
+      background: var(--panel-alt); border-radius: 4px; flex-shrink: 0;
+    }
+    .record-block .record-label { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.4px; }
+    .record-block .record-date { font-weight: 700; font-size: 14px; color: var(--text); margin-top: 2px; }
+
+    /* ============ SEARCH BAR (DRAGGABLE) ============ */
+    .search-wrapper { position: relative; margin: 16px 20px 0; z-index: 500; }
+    .search-wrapper.floating {
+      position: fixed; margin: 0; top: 100px; left: 20px; width: 400px;
+      z-index: 1500; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      border-radius: 8px; background: var(--panel); border: 1px solid var(--border);
+      padding: 4px;
+    }
+    .search-wrapper.floating .search-input { border-radius: 6px; }
+    .search-wrapper.floating .search-drag-handle { display: flex; }
+    .search-drag-handle {
+      display: none; align-items: center; justify-content: space-between;
+      padding: 4px 8px 6px 8px; cursor: grab; background: var(--panel-alt);
+      border-bottom: 1px solid var(--border); border-radius: 6px 6px 0 0;
+      margin: -4px -4px 4px -4px; user-select: none; font-size: 11px;
+      color: var(--muted); font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; gap: 6px;
+    }
+    .search-drag-handle:active { cursor: grabbing; }
+    .search-wrapper.locked .search-drag-handle { cursor: not-allowed; background: var(--warning-bg); color: var(--warning); }
+    .search-input {
+      width: 100%; padding: 11px 82px 11px 14px;
+      border: 1px solid var(--border-strong); border-radius: 6px;
+      font-size: 14px; font-family: inherit; background: var(--input-bg);
+      color: var(--text); outline: none;
+    }
+    .search-input:focus { border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(9,105,218,0.15); }
+    .search-icon {
+      position: absolute; right: 86px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 15px; pointer-events: none;
+    }
+    .search-wrapper.floating .search-icon { top: calc(50% + 8px); }
+    .search-actions {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      display: flex; gap: 4px; z-index: 2;
+    }
+    .search-wrapper.floating .search-actions { top: calc(50% + 8px); }
+    .search-action-btn {
+      width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--border);
+      background: var(--panel-alt); color: var(--muted); cursor: pointer;
+      font-size: 11px; display: flex; align-items: center; justify-content: center;
+      padding: 0; transition: all 0.15s; font-family: inherit;
+    }
+    .search-action-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+    .search-action-btn.active { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+    .search-resize-handle {
+      display: none; position: absolute; right: 0; bottom: 0;
+      width: 16px; height: 16px; cursor: nwse-resize; z-index: 3;
+    }
+    .search-resize-handle::after {
+      content: ''; position: absolute; right: 2px; bottom: 2px;
+      width: 10px; height: 10px; border-right: 2px solid var(--border-strong);
+      border-bottom: 2px solid var(--border-strong); border-radius: 0 0 3px 0;
+    }
+    .search-wrapper.floating:not(.locked) .search-resize-handle { display: block; }
+    .search-wrapper.locked .search-resize-handle { display: none !important; }
+
+    /* ============ BODY / SIDEBAR ============ */
+    .app-body { display: flex; margin: 16px 20px; gap: 16px; flex: 1; align-items: flex-start; }
+    .sidebar {
+      width: 250px; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 6px; flex-shrink: 0; overflow: hidden;
+      min-height: 400px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+    }
+    .sidebar.collapsed { width: 64px; }
+    .sidebar.collapsed .sidebar-label, .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-footer-text { display: none; }
+    .sidebar.collapsed .sidebar-item { justify-content: center; padding: 10px 0; }
+    .sidebar.collapsed .sidebar-item i { margin-right: 0; width: 100%; text-align: center; }
+    .sidebar-header {
+      background: var(--panel-alt); color: var(--text); padding: 12px 14px;
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; display: flex; justify-content: space-between;
+      align-items: center; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-toggle {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      cursor: pointer; font-size: 12px; padding: 2px 8px; border-radius: 4px;
+    }
+    .sidebar-toggle:hover { background: var(--panel); color: var(--text); border-color: var(--border-strong); }
+    .sidebar-nav { flex: 1; padding: 6px 0; overflow-y: auto; }
+    .sidebar-section-title {
+      font-size: 11px; text-transform: uppercase; color: var(--muted);
+      padding: 12px 14px 6px; letter-spacing: 0.6px; font-weight: 700;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; padding: 9px 14px; cursor: pointer;
+      font-size: 14px; color: var(--text); border-left: 3px solid transparent;
+      gap: 10px; margin: 1px 0;
+    }
+    .sidebar-item i { width: 18px; text-align: center; font-size: 14px; color: var(--muted); flex-shrink: 0; }
+    .sidebar-item:hover { background: var(--panel-alt); border-left-color: var(--border-strong); }
+    .sidebar-item.active { background: var(--primary-light); border-left-color: var(--primary); font-weight: 600; color: var(--primary); }
+    .sidebar-item.active i { color: var(--primary); }
+    .sidebar-item.danger { color: var(--danger); }
+    .sidebar-item.danger i { color: var(--danger); }
+    .sidebar-item.danger:hover { background: var(--danger-bg); border-left-color: var(--danger); }
+    .sidebar-footer {
+      padding: 10px 14px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--muted); background: var(--panel-alt); font-weight: 600;
+    }
+
+    /* ============ MAIN / PANELS ============ */
+    .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .panel-header {
+      background: var(--panel-alt); color: var(--text); padding: 12px 16px;
+      font-size: 14px; font-weight: 700; display: flex; justify-content: space-between;
+      align-items: center; border-bottom: 1px solid var(--border);
+    }
+    .panel-header i { color: var(--primary); margin-right: 6px; }
+    .panel-body { padding: 16px; }
+
+    /* ============ FORMS ============ */
+    .form-panel { display: none; }
+    .form-panel.visible { display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full-width { grid-column: span 2; }
+    .form-group label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .form-group label .required { color: var(--danger); margin-left: 2px; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 4px;
+      font-size: 14px; font-family: inherit; background: var(--input-bg);
+      color: var(--text); outline: none; width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(9,105,218,0.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 54px; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; grid-column: span 2; }
+
+    /* ============ BUTTONS ============ */
+    .btn {
+      display: inline-block; padding: 8px 16px; font-size: 13px; font-weight: 600;
+      border: 1px solid transparent; border-radius: 4px; cursor: pointer;
+      text-align: center; font-family: inherit; background: var(--panel-alt);
+      color: var(--text); border-color: var(--border);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn:hover { background: var(--bg); border-color: var(--border-strong); }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+    .btn-success:hover { background: var(--success-hover); border-color: var(--success-hover); }
+    .btn-danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+    .btn-danger:hover { background: var(--danger-bg); }
+    .btn-warning { background: transparent; color: var(--warning); border-color: var(--warning); }
+    .btn-warning:hover { background: var(--warning-bg); }
+    .btn-outline { background: var(--panel); color: var(--primary); border-color: var(--primary); }
+    .btn-outline:hover { background: var(--primary-light); }
+    .btn-print { background: transparent; color: var(--link); border-color: var(--link); }
+    .btn-print:hover { background: var(--primary-light); }
+    .btn-sm { padding: 4px 10px; font-size: 11px; font-weight: 600; }
+
+    /* ============ FILTER / TABLE ============ */
+    .filter-row {
+      display: none; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px;
+      align-items: end; padding: 14px 16px; background: var(--panel-alt);
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-row.visible { display: grid; }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.4px; }
+    .filter-group select {
+      padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+      font-size: 13px; background: var(--input-bg); color: var(--text); font-family: inherit;
+    }
+    .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .table-wrapper { overflow-x: auto; width: 100%; }
+    table.official-table { width: 100%; border-collapse: collapse; font-family: inherit; font-size: 13px; background: var(--panel); }
+    table.official-table th {
+      background: var(--panel-alt); color: var(--text); font-size: 12px;
+      font-weight: 700; text-transform: uppercase; text-align: center;
+      padding: 10px 8px; border: 1px solid var(--border); cursor: pointer;
+      white-space: nowrap; letter-spacing: 0.4px; user-select: none;
+    }
+    table.official-table th:hover { background: var(--bg); }
+    table.official-table th .sort-arrow { font-size: 10px; margin-left: 4px; color: var(--primary); }
+    table.official-table td {
+      border: 1px solid var(--border); padding: 8px 10px; font-size: 13px;
+      text-align: center; vertical-align: middle; background: var(--panel); color: var(--text);
+    }
+    table.official-table tr:nth-child(even) td { background: var(--panel-alt); }
+    table.official-table tr:hover td { background: var(--primary-light); }
+    table.official-table tr.due-row td { background: var(--danger-bg); }
+    table.official-table tr.due-row:hover td { background: var(--danger-bg); }
+    table.official-table td.left-align { text-align: left; }
+    table.official-table td.actions-cell { white-space: nowrap; padding: 4px 6px; }
+    table.official-table td.actions-cell .btn-sm { margin: 0 2px; padding: 3px 8px; font-size: 10px; }
+
+    .status-paid { color: var(--success); font-weight: 700; text-transform: uppercase; font-size: 11px; }
+    .status-partial { color: var(--warning); font-weight: 700; text-transform: uppercase; font-size: 11px; }
+    .status-due { color: var(--danger); font-weight: 700; text-transform: uppercase; font-size: 11px; }
+    .status-hidden { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 11px; }
+
+    /* ============ TRANSACTION TRACKING ============ */
+    .txn-live-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      color: var(--muted); padding: 3px 9px; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 12px; margin-left: 8px;
+    }
+    .txn-live-badge .dot { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; flex-shrink: 0; }
+    .txn-live-badge.online { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+    .txn-live-badge.online .dot { background: var(--success); animation: pulseDot 1.5s infinite; }
+    .txn-live-badge.offline { color: var(--danger); border-color: var(--danger); background: var(--danger-bg); }
+    .txn-live-badge.offline .dot { background: var(--danger); }
+    .txn-live-badge.syncing { color: var(--warning); border-color: var(--warning); background: var(--warning-bg); }
+    .txn-live-badge.syncing .dot { background: var(--warning); animation: pulseDot 0.8s infinite; }
+    .txn-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+    .txn-tab {
+      padding: 9px 18px; font-size: 13px; font-weight: 600; color: var(--muted);
+      cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+      background: transparent; border-top: none; border-left: none; border-right: none;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .txn-tab:hover { color: var(--text); background: var(--panel-alt); }
+    .txn-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .txn-tab i { margin-right: 6px; }
+    .txn-pane { display: none; }
+    .txn-pane.active { display: block; }
+    .txn-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .txn-stat-card { border: 1px solid var(--border); background: var(--panel-alt); border-radius: 6px; padding: 14px 16px; }
+    .txn-stat-card .txn-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+    .txn-stat-card .txn-stat-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .txn-stat-card .txn-stat-value.positive { color: var(--success); }
+    .txn-stat-card .txn-stat-value.negative { color: var(--danger); }
+    .txn-stat-card .txn-stat-value.neutral { color: var(--primary); }
+    .txn-filters {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 10px;
+      margin-bottom: 14px; padding: 12px 14px; background: var(--panel-alt);
+      border: 1px solid var(--border); border-radius: 6px; align-items: end;
+    }
+    .txn-filters .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .txn-filters .filter-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.4px; }
+    .txn-filters .filter-group input, .txn-filters .filter-group select {
+      padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: 4px;
+      font-size: 13px; background: var(--input-bg); color: var(--text); font-family: inherit;
+      outline: none; width: 100%;
+    }
+    .txn-filters .filter-group input:focus, .txn-filters .filter-group select:focus {
+      border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(9,105,218,0.15);
+    }
+    .txn-table { width: 100%; border-collapse: collapse; font-family: inherit; font-size: 13px; }
+    .txn-table thead th {
+      background: var(--panel-alt); color: var(--text); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; text-align: left; padding: 10px 12px;
+      border-bottom: 2px solid var(--border); letter-spacing: 0.4px; white-space: nowrap;
+    }
+    .txn-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+    .txn-table tbody tr:hover { background: var(--panel-alt); }
+    .txn-table tbody tr:last-child td { border-bottom: none; }
+    .txn-badge {
+      display: inline-block; padding: 3px 9px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.4px; border-radius: 3px; white-space: nowrap;
+    }
+    .txn-badge.received { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+    .txn-badge.due-added { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+    .txn-badge.adjustment { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary); }
+    .txn-badge.edit { background: var(--panel-alt); color: var(--muted); border: 1px solid var(--border-strong); }
+    .txn-badge.other { background: var(--panel-alt); color: var(--muted); border: 1px solid var(--border); }
+    .txn-amount { font-weight: 700; font-size: 13px; }
+    .txn-amount.positive { color: var(--success); }
+    .txn-amount.negative { color: var(--danger); }
+    .txn-amount.neutral { color: var(--muted); }
+    .txn-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+    .txn-empty i { font-size: 32px; color: var(--border-strong); margin-bottom: 10px; display: block; pointer-events: none; }
+    .txn-sheet-frame { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-alt); }
+    .txn-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+    }
+
+    /* ============ PAGINATION ============ */
+    .pagination-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; background: var(--panel-alt);
+      border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; font-size: 13px;
+    }
+    .pagination-info { color: var(--muted); }
+    .pagination-pages { display: flex; gap: 4px; align-items: center; }
+    .pagination-pages button {
+      border: 1px solid var(--border); background: var(--panel); color: var(--text);
+      padding: 5px 10px; font-size: 12px; cursor: pointer; border-radius: 4px;
+      font-family: inherit; font-weight: 600; transition: all 0.15s; min-width: 30px;
+    }
+    .pagination-pages button:hover { background: var(--bg); border-color: var(--border-strong); }
+    .pagination-pages button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .page-size-select { border: 1px solid var(--border-strong); padding: 5px 8px; font-size: 12px; background: var(--input-bg); color: var(--text); border-radius: 4px; font-family: inherit; }
+
+    /* ============ MODAL ============ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(31,35,40,0.55);
+      z-index: 1000; justify-content: center; align-items: center; padding: 20px;
+      animation: fadeIn 0.18s ease;
+    }
+    .modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-box {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;
+      display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+      animation: slideUp 0.22s ease;
+    }
+    .modal-box.wide { max-width: 1100px; }
+    .modal-box.narrow { max-width: 480px; }
+    .modal-header {
+      background: var(--primary); color: #fff; padding: 14px 18px;
+      font-size: 14px; font-weight: 700; display: flex; justify-content: space-between;
+      align-items: center; border-radius: 6px 6px 0 0; border-bottom: 3px solid var(--gold);
+    }
+    .modal-close {
+      background: rgba(255,255,255,0.12); border: none; color: #fff;
+      font-size: 18px; cursor: pointer; width: 30px; height: 30px;
+      border-radius: 4px; line-height: 1; font-family: inherit;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.22); }
+    .modal-body { padding: 20px; font-family: inherit; font-size: 14px; color: var(--text); }
+    .modal-footer {
+      padding: 14px 18px; display: flex; justify-content: flex-end; gap: 8px;
+      border-top: 1px solid var(--border); background: var(--panel-alt);
+      border-radius: 0 0 6px 6px; flex-wrap: wrap;
+    }
+
+    /* ============ TOAST ============ */
+    .toast-container {
+      position: fixed; top: 70px; right: 20px; z-index: 20000;
+      display: flex; flex-direction: column; gap: 8px; max-width: 340px;
+    }
+    .toast {
+      padding: 12px 16px; border: 1px solid var(--border); border-left: 4px solid var(--primary);
+      border-radius: 6px; font-size: 13px; font-family: inherit; background: var(--panel);
+      color: var(--text); cursor: pointer; box-shadow: var(--shadow-md);
+      transition: transform 0.15s; animation: slideUp 0.22s ease;
+    }
+    .toast:hover { transform: translateX(-3px); }
+    .toast.success { border-left-color: var(--success); color: var(--success); }
+    .toast.error { border-left-color: var(--danger); color: var(--danger); }
+    .toast.info { border-left-color: var(--link); color: var(--link); }
+    .toast.warning { border-left-color: var(--warning); color: var(--warning); }
+
+    /* ============ FOOTER ============ */
+    .app-footer {
+      background: var(--footer-bg); color: var(--footer-text);
+      padding: 24px 20px 18px; font-size: 13px;
+      display: flex; flex-direction: column; gap: 12px; margin-top: auto;
+    }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .footer-links a { color: var(--footer-text); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .footer-links a:hover { color: #fff; }
+    .footer-contact { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; font-size: 12px; color: var(--footer-text); }
+    .footer-contact i { color: var(--gold); margin-right: 6px; }
+    .footer-social { display: flex; gap: 14px; justify-content: center; font-size: 16px; }
+    .footer-social a { color: var(--footer-muted); transition: color 0.15s, transform 0.15s; }
+    .footer-social a:hover { color: #fff; transform: translateY(-2px); }
+    .footer-stats {
+      display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
+      font-weight: 600; color: var(--footer-text); font-size: 12px; padding: 10px 0;
+      border-top: 1px solid #30363d; border-bottom: 1px solid #30363d;
+    }
+    .footer-stats strong { color: var(--gold); }
+    .footer-copy { text-align: center; font-size: 11px; color: var(--footer-muted); padding-top: 4px; }
+    .footer-copy a { color: var(--gold); font-weight: 600; }
+    .footer-copy a:hover { color: #fff; }
+    .footer-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .badge {
+      padding: 3px 10px; font-size: 10px; text-transform: uppercase;
+      color: var(--footer-muted); background: rgba(255,255,255,0.06);
+      border: 1px solid #30363d; border-radius: 3px; letter-spacing: 0.4px; font-weight: 600;
+    }
+    .badge a { color: var(--success); }
+    .admin-link { color: #484f58; font-size: 11px; cursor: pointer; text-align: center; padding-top: 4px; }
+    .admin-link:hover { color: var(--gold); text-decoration: underline; }
+
+    /* ============ PREVIEW / BLOCKS ============ */
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .preview-item { border: 1px solid var(--border); padding: 10px 12px; background: var(--panel-alt); border-radius: 4px; }
+    .preview-item .preview-label { font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.4px; }
+    .preview-item .preview-value { font-size: 15px; font-weight: 600; color: var(--text); }
+    .amount-blocks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 14px 0; }
+    .amount-block { border: 1px solid var(--border); padding: 14px 10px; text-align: center; background: var(--panel-alt); border-radius: 4px; }
+    .amount-block .amount-label { font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.4px; }
+    .amount-block .amount-value { font-size: 22px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+    .note-area { background: var(--panel-alt); border: 1px solid var(--border); padding: 12px; font-size: 13px; white-space: pre-wrap; min-height: 48px; margin-bottom: 10px; font-family: inherit; color: var(--text); border-radius: 4px; line-height: 1.5; }
+    .warning-box { border: 1px solid var(--danger); background: var(--danger-bg); color: var(--danger); padding: 12px 14px; font-size: 13px; margin: 10px 0; font-weight: 600; border-radius: 4px; }
+    .info-box { border: 1px solid var(--primary); background: var(--primary-light); color: var(--text); padding: 12px 14px; font-size: 13px; margin: 10px 0; border-radius: 4px; }
+    .info-box-warning { border: 1px solid var(--warning); background: var(--warning-bg); color: var(--warning); padding: 12px 14px; font-size: 13px; margin: 10px 0; border-radius: 4px; font-weight: 600; }
+    .password-error { color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 6px; display: none; }
+    .password-error.visible { display: block; }
+    .text-muted { color: var(--muted); }
+    .text-danger { color: var(--danger); }
+    .text-success { color: var(--success); }
+
+    /* ============ PRINT ============ */
+    .print-area { display: none; }
+    @media print {
+      @page { margin: 12mm; }
+      html, body { background: #fff !important; color: #000 !important; display: block !important; margin: 0 !important; padding: 0 !important; }
+      body > *:not(.print-area) { display: none !important; }
+      .print-area { display: block !important; position: static !important; width: 100% !important; padding: 0 !important; margin: 0 !important; background: #fff !important; color: #000 !important; font-family: "Times New Roman", Georgia, serif !important; }
+      .print-area * { color: #000 !important; background: transparent !important; }
+      .no-print { display: none !important; }
+      .modal-overlay { display: none !important; }
+      .toast-container { display: none !important; }
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 900px) {
+      .txn-stats { grid-template-columns: repeat(2, 1fr); }
+      .txn-filters { grid-template-columns: 1fr 1fr; }
+      .app-body { flex-direction: column; margin: 12px; gap: 12px; }
+      .sidebar { width: 100% !important; min-height: auto; }
+      .sidebar.collapsed { width: 100% !important; }
+      .sidebar.collapsed .sidebar-label, .sidebar.collapsed .sidebar-section-title,
+      .sidebar.collapsed .sidebar-footer-text { display: inline; }
+      .sidebar.collapsed .sidebar-item { justify-content: flex-start; padding: 9px 14px; }
+      .sidebar.collapsed .sidebar-item i { margin-right: 0; width: 18px; text-align: left; }
+      .filter-row { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full-width { grid-column: span 1; }
+      .form-actions { grid-column: span 1; }
+      .preview-grid { grid-template-columns: 1fr; }
+      .amount-blocks { grid-template-columns: 1fr; }
+      .gov-strip { padding: 10px 14px; flex-direction: column; align-items: stretch; gap: 10px; }
+      .gov-strip-left, .gov-strip-center, .gov-strip-right { justify-content: center; flex-wrap: wrap; }
+      .official-header { flex-direction: column; text-align: center; margin: 12px 12px 0; }
+      .search-wrapper { margin: 12px 12px 0; }
+      .toast-container { right: 10px; left: 10px; max-width: none; top: 60px; }
+      .search-wrapper.floating { width: calc(100vw - 24px) !important; left: 12px !important; }
+    }
+    @media (max-width: 520px) {
+      .filter-row { grid-template-columns: 1fr; }
+      .btn { font-size: 12px; padding: 7px 12px; }
+      .panel-body { padding: 12px; }
+      .modal-body { padding: 14px; }
+      .txn-stats { grid-template-columns: 1fr; }
+      .txn-filters { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================
+       LOGIN SCREEN
+       ============================================ -->
+  <div id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-logo"><i class="fas fa-shield-halved"></i></div>
+      <h2>RGCE SparkDesk</h2>
+      <p class="auth-sub">Secure Cloud Login</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="yourname@gmail.com" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="authPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="auth-btn primary" id="authLoginBtn">
+        <i class="fas fa-right-to-bracket"></i> Login
+      </button>
+      <button class="auth-btn secondary" id="authResetBtn">Forgot Password?</button>
+      <div id="authMsg"></div>
+      <div class="auth-footer">
+        🔒 Data is encrypted in transit and stored in your private cloud.<br>
+        Only you can access it with your email and password.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       GOV STRIP
+       ============================================ -->
+  <div class="gov-strip no-print">
+    <div class="gov-strip-left">
+      <i class="fas fa-phone"></i>
+      <span>+8801340561000</span>
+      <span class="sync-link" id="lastSyncTop" title="Click to sync now">Last Sync: Never</span>
+    </div>
+    <div class="gov-strip-center">
+      <div class="telegram-status-box" id="telegramStatusBox">
+        <i class="fab fa-telegram-plane"></i>
+        <span id="telegramStatusText">Not configured</span>
+        <button class="btn-top" id="telegramBackupNow" style="padding:2px 6px;font-size:10px;border-radius:3px;">↻</button>
+      </div>
+    </div>
+    <div class="gov-strip-right">
+      <span class="cloud-badge" id="cloudStatusBadge"><span class="dot"></span>Cloud: …</span>
+      <button class="btn-top" id="forceCloudSyncBtn" title="Force push to cloud">
+        <i class="fas fa-cloud-arrow-up"></i> Sync
+      </button>
+      <button class="btn-top" id="downloadBackupTop"><i class="fas fa-download"></i> Backup</button>
+      <button class="btn-top" id="addCustomerTopBtn"><i class="fas fa-plus"></i> Add Customer</button>
+      <button class="btn-top" id="logoutBtn" title="Logout">
+        <i class="fas fa-right-from-bracket"></i> Logout
+      </button>
+      <label class="dark-toggle-label">
+        <input type="checkbox" id="darkModeToggle"> Dark
+      </label>
+    </div>
+  </div>
+
+  <!-- ============================================
+       OFFICIAL HEADER
+       ============================================ -->
+  <div class="official-header no-print">
+    <div class="header-center">
+      <div class="shop-name">Roza Gift Corner &amp; Electric</div>
+      <div class="tagline">Gifts • Electrical • Cosmetics — Under One Roof</div>
+      <div class="double-rule"></div>
+    </div>
+    <div class="record-block">
+      <div class="record-label">Record No.</div>
+      <div class="record-date" id="recordDate">—</div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SEARCH BAR (draggable / lockable)
+       ============================================ -->
+  <div class="search-wrapper inline" id="searchWrapper">
+    <div class="search-drag-handle" id="searchDragHandle" title="Drag to move search bar">
+      <span class="drag-grip"><i class="fas fa-grip-vertical"></i> <span id="searchHandleLabel">Search Bar</span></span>
+      <span id="searchLockIndicator" style="font-size:10px;opacity:0.85;"></span>
+    </div>
+    <input type="text" class="search-input" id="globalSearch" placeholder="Search by name, phone, address, or source...">
+    <i class="fas fa-search search-icon"></i>
+    <div class="search-actions">
+      <button type="button" class="search-action-btn" id="searchFloatBtn" title="Detach / Attach"><i class="fas fa-arrows-alt"></i></button>
+      <button type="button" class="search-action-btn" id="searchLockBtn" title="Lock / Unlock"><i class="fas fa-lock-open"></i></button>
+      <button type="button" class="search-action-btn" id="searchResetBtn" title="Reset"><i class="fas fa-undo"></i></button>
+    </div>
+    <div class="search-resize-handle" id="searchResizeHandle" title="Drag to resize"></div>
+  </div>
+
+  <!-- ============================================
+       APP BODY
+       ============================================ -->
+  <div class="app-body">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-label"><i class="fas fa-bars"></i> Menu</span>
+        <button class="sidebar-toggle" id="sidebarToggle">◀</button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-item active" data-action="dashboard"><i class="fas fa-tachometer-alt"></i><span class="sidebar-label">Dashboard</span></div>
+        <div class="sidebar-item" data-action="transactionTracking"><i class="fas fa-exchange-alt"></i><span class="sidebar-label">Transaction Tracking</span></div>
+        <div class="sidebar-item" data-action="advancedFilter"><i class="fas fa-filter"></i><span class="sidebar-label">Advanced Filter</span></div>
+        <div class="sidebar-item" data-action="liveStats"><i class="fas fa-chart-bar"></i><span class="sidebar-label">Live Stats</span></div>
+        <div class="sidebar-section-title">Reports &amp; Data</div>
+        <div class="sidebar-item" data-action="summaryReport"><i class="fas fa-file-alt"></i><span class="sidebar-label">Summary Report</span></div>
+        <div class="sidebar-item" data-action="printReport"><i class="fas fa-print"></i><span class="sidebar-label">Print Report</span></div>
+        <div class="sidebar-item" data-action="backupRestore"><i class="fas fa-database"></i><span class="sidebar-label">Backup / Restore</span></div>
+        <div class="sidebar-item" data-action="telegramBackup"><i class="fab fa-telegram-plane"></i><span class="sidebar-label">Telegram Backup</span></div>
+        <div class="sidebar-item" data-action="googleSheets"><i class="fas fa-table"></i><span class="sidebar-label">Google Sheets Sync</span></div>
+        <div class="sidebar-section-title">Tools &amp; Settings</div>
+        <div class="sidebar-item" data-action="clearNotes"><i class="fas fa-sticky-note"></i><span class="sidebar-label">Clear Notes</span></div>
+        <div class="sidebar-item" data-action="clearAmountsSource"><i class="fas fa-coins"></i><span class="sidebar-label">Clear Amounts by Source</span></div>
+        <div class="sidebar-item" data-action="clearAllAmounts"><i class="fas fa-calculator"></i><span class="sidebar-label">Clear All Amounts</span></div>
+        <div class="sidebar-item danger" data-action="clearAllData"><i class="fas fa-trash-alt"></i><span class="sidebar-label">Clear ALL Data</span></div>
+        <div class="sidebar-section-title">Information</div>
+        <div class="sidebar-item" data-action="shopDetails"><i class="fas fa-store"></i><span class="sidebar-label">Shop Details</span></div>
+        <div class="sidebar-item" data-action="developerInfo"><i class="fas fa-code"></i><span class="sidebar-label">Developer Info</span></div>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="sidebar-footer-text">Total: <span id="sidebarCustomerCount">0</span></span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- ADD CUSTOMER FORM -->
+      <div class="panel form-panel add-customer-panel" id="addCustomerPanel">
+        <div class="panel-header">
+          <span><i class="fas fa-user-plus"></i> Add New Customer</span>
+          <button class="btn-top" id="closeFormBtn" style="font-size:11px;padding:3px 10px;background:transparent;color:var(--muted);border-color:var(--border);">✕</button>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Customer Name <span class="required">*</span></label>
+              <input type="text" id="custName" autofocus required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="text" id="custPhone">
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <select id="custAddress">
+                <option value="">— Select —</option>
+                <option value="Kh P">Kh P</option>
+                <option value="Naohata Mor">Naohata Mor</option>
+                <option value="Chowmashiya">Chowmashiya</option>
+                <option value="Bagdhana">Bagdhana</option>
+                <option value="Fulbari">Fulbari</option>
+                <option value="Mohadevpur, Naogaon">Mohadevpur, Naogaon</option>
+                <option value="Naogaon">Naogaon</option>
+                <option value="D. Kh P">D. Kh P</option>
+                <option value="Ranipukur">Ranipukur</option>
+                <option value="Shikarpur">Shikarpur</option>
+                <option value="Palpara">Palpara</option>
+                <option value="Saraswatipur">Saraswatipur</option>
+                <option value="Rishipara">Rishipara</option>
+                <option value="Naripara, Kh P">Naripara, Kh P</option>
+                <option value="Jalalpur">Jalalpur</option>
+                <option value="Sardarpara, Kh P">Sardarpara, Kh P</option>
+                <option value="Dewanpara, Kh P">Dewanpara, Kh P</option>
+                <option value="Sharuppur">Sharuppur</option>
+                <option value="Kumirpukur">Kumirpukur</option>
+                <option value="Sonapur">Sonapur</option>
+                <option value="Lolobolo">Lolobolo</option>
+                <option value="Vimpur">Vimpur</option>
+                <option value="Munshipara, Kh P">Munshipara, Kh P</option>
+                <option value="Khalishakuri, Kh P">Khalishakuri, Kh P</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group" id="customAddressGroup" style="display:none;">
+              <label>Custom Address</label>
+              <input type="text" id="custCustomAddress">
+            </div>
+            <div class="form-group">
+              <label>Total Due Amount</label>
+              <input type="number" id="custDue" min="0" step="1">
+            </div>
+            <div class="form-group">
+              <label>Paid Amount</label>
+              <input type="number" id="custPaid" min="0" step="1">
+            </div>
+            <div class="form-group">
+              <label>Source</label>
+              <select id="custSource">
+                <option value="">— Select —</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group" id="customSourceGroup" style="display:none;">
+              <label>Custom Source</label>
+              <input type="text" id="custCustomSource">
+            </div>
+            <div class="form-group full-width">
+              <label>Notes</label>
+              <textarea id="custNote" rows="2"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn" id="cancelFormBtn">Cancel</button>
+              <button class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER REGISTER TABLE -->
+      <div class="panel">
+        <div class="panel-header">
+          <span><i class="fas fa-users"></i> Customer Register</span>
+          <span id="tableHeaderCount" class="text-muted" style="font-size:12px;font-weight:600;"></span>
+        </div>
+        <div class="filter-row" id="advancedFilterRow">
+          <div class="filter-group">
+            <label>Address</label>
+            <select id="filterAddress"><option value="">All</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select id="filterStatus">
+              <option value="">All</option>
+              <option value="Hidden Due">Hidden Due</option>
+              <option value="Due">Due</option>
+              <option value="Partial Paid">Partial Paid</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Source</label>
+            <select id="filterSource">
+              <option value="">All</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-sm btn-outline" id="printFilteredBtn"><i class="fas fa-print"></i> Print Filtered</button>
+            <button class="btn btn-sm btn-outline" id="manualReportBtn"><i class="fas fa-file"></i> Manual Report</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="official-table" id="customerTable">
+            <thead>
+              <tr>
+                <th data-sort="sl">SL <span class="sort-arrow"></span></th>
+                <th data-sort="name">Customer Name <span class="sort-arrow"></span></th>
+                <th data-sort="address">Address <span class="sort-arrow"></span></th>
+                <th data-sort="source">Source <span class="sort-arrow"></span></th>
+                <th data-sort="status">Status <span class="sort-arrow"></span></th>
+                <th data-sort="due">Total Due <span class="sort-arrow"></span></th>
+                <th data-sort="paid">Total Paid <span class="sort-arrow"></span></th>
+                <th data-sort="currentDue">Current Due <span class="sort-arrow"></span></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customerTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-row">
+          <div class="pagination-info" id="paginationInfo">Showing 0 to 0 of 0 customers</div>
+          <div class="pagination-pages" id="paginationPages"></div>
+          <div>
+            <label class="text-muted" style="font-size:12px;font-weight:600;">Page size: </label>
+            <select class="page-size-select" id="pageSizeSelect">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="35" selected>35</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="app-footer no-print">
+    <div class="footer-links">
+      <a href="#" data-action="dashboard">Dashboard</a>
+      <a href="#" data-action="summaryReport">Report</a>
+      <a href="#" data-action="liveStats">Stats</a>
+      <a href="#" data-action="backupRestore">Backup</a>
+      <a href="#" data-action="shopDetails">Shop</a>
+      <a href="#" data-action="developerInfo">Dev</a>
+      <a href="#" data-action="help">Help</a>
+    </div>
+    <div class="footer-contact">
+      <span><i class="fas fa-phone"></i> +8801715986646</span>
+      <span><i class="fas fa-map-marker-alt"></i> Moshjid Market, Naohata Mor, Mohadevpur, Naogaon</span>
+      <span><i class="fas fa-clock"></i> 8:00 AM – 10:00 PM</span>
+    </div>
+    <div class="footer-social">
+      <a href="https://web.facebook.com/profile.php?id=61569560136374" target="_blank" title="Facebook"><i class="fab fa-facebook"></i></a>
+      <a href="https://wa.me/8801715986646" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      <a href="https://www.instagram.com/roza_gift_corner/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+      <a href="#" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      <a href="https://www.youtube.com/@Rozagiftcornerandelectric" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+    </div>
+    <div class="footer-stats">
+      <span>Total: <strong id="footerTotal">0</strong></span>
+      <span>Paid: <strong id="footerPaid">0</strong> (Full+Partial)</span>
+      <span>Due: <strong id="footerDue">0</strong></span>
+    </div>
+    <div class="footer-copy">
+      © 2025 Roza Gift Corner &amp; Electric | Powered by
+      <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">Farhan Tanzid Shiyam</a>
+    </div>
+    <div class="footer-badges">
+      <span class="badge">DMCA</span>
+      <span class="badge">SSL</span>
+      <span class="badge">Auto Backup</span>
+      <span class="badge"><a href="https://farhantanzidshiyam-dev.github.io/rozagiftcorner-backup/" target="_blank">Android App</a></span>
+      <span class="badge" id="liveTimeBadge">--:--:--</span>
+    </div>
+    <div class="admin-link" id="adminPanelLink">Admin Panel</div>
+  </footer>
+
+  <!-- ============================================
+       TOAST + MODAL + PRINT AREA
+       ============================================ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+      <div class="modal-header">
+        <span id="modalTitle">Modal</span>
+        <button class="modal-close" id="modalCloseBtn">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div class="print-area" id="printArea"></div>
+
+  <!-- ============================================
+       FIREBASE SDK (module)
+       ============================================ -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAqsPu8YK5xFHEoWTmZLzJl6z9NmchdrEg",
+      authDomain: "rgce-sparkdesk.firebaseapp.com",
+      projectId: "rgce-sparkdesk",
+      storageBucket: "rgce-sparkdesk.firebasestorage.app",
+      messagingSenderId: "514973995259",
+      appId: "1:514973995259:web:af37a75e2cca5898a7605e",
+      measurementId: "G-YC3Q6CB871"
+    };
+
+    const fbApp = initializeApp(firebaseConfig);
+    window.FB = {
+      auth: getAuth(fbApp),
+      db: getFirestore(fbApp),
+      signInWithEmailAndPassword, signOut, onAuthStateChanged,
+      sendPasswordResetEmail,
+      doc, setDoc, getDoc, serverTimestamp
+    };
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+
+
+  <!-- ============================================
+       MAIN APP LOGIC
+       ============================================ -->
+  <script>
+  (function() {
+    'use strict';
+
+    /* ============================================================
+       TEXT-COPY PROTECTION
+       ============================================================ */
+    (function protectTextCopy() {
+      document.addEventListener('contextmenu', function(e) {
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        e.preventDefault();
+      });
+      document.addEventListener('keydown', function(e) {
+        const tag = (e.target.tagName || '').toLowerCase();
+        const isFormField = tag === 'input' || tag === 'textarea' || tag === 'select';
+        const isPrintArea = e.target.closest && e.target.closest('.print-area');
+        if (isFormField || isPrintArea) return;
+        const key = (e.key || '').toLowerCase();
+        const ctrl = e.ctrlKey || e.metaKey;
+        if (ctrl && (key === 'c' || key === 'x' || key === 'a' || key === 's' || key === 'u')) {
+          e.preventDefault();
+          return false;
+        }
+      }, true);
+      document.addEventListener('dragstart', function(e) {
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea') return;
+        e.preventDefault();
+      });
+      document.addEventListener('copy', function(e) {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) { e.preventDefault(); return; }
+        const node = sel.getRangeAt(0).commonAncestorContainer;
+        const el = node.nodeType === 1 ? node : node.parentElement;
+        if (!el) { e.preventDefault(); return; }
+        const tag = (el.tagName || '').toLowerCase();
+        const isFormField = tag === 'input' || tag === 'textarea';
+        const isPrintArea = el.closest && el.closest('.print-area');
+        if (!isFormField && !isPrintArea) e.preventDefault();
+      });
+      document.addEventListener('cut', function(e) {
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') e.preventDefault();
+      });
+    })();
+
+    /* ============================================================
+       CONFIG
+       ============================================================ */
+    const STORAGE_KEY = "roza_gift_corner_customers_v1.5";
+    const ADMIN_PASSWORDS = {
+      clearNotes: "3508",
+      clearAmounts: "3508",
+      clearData: "1812693380",
+      summaryAccess: "3508",
+      deleteCustomer: "3508"
+    };
+    const MASTER_PASSWORD = "fmkk";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_7U4RMPHBxJIDxayIjzSwDT5tIJbFRVW1Uzx8qmkbKTxEOfu39Mptw1c-FFqhrUkAPg/exec";
+    const SPREADSHEET_ID = "1LA-AbQ24BmmTqOk9We4zTC_RdsgX4oZCct-_nu8b1j8";
+    const SHEET_PREVIEW_URL = "https://docs.google.com/spreadsheets/d/1LA-AbQ24BmmTqOk9We4zTC_RdsgX4oZCct-_nu8b1j8/preview?rm=minimal&widget=true&headers=false&single=true";
+    const SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1LA-AbQ24BmmTqOk9We4zTC_RdsgX4oZCct-_nu8b1j8/edit";
+    const GOOGLE_DRIVE_URL = "https://drive.google.com/drive/folders/1yYuczLULObc0TrnQ3XlInfD8MH08POfs?usp=drive_link";
+    const TELEGRAM_TOKEN_KEY = "telegram_bot_token";
+    const TELEGRAM_CHAT_KEY = "telegram_chat_id";
+    const LAST_SYNC_KEY = "roza_last_sheet_sync";
+    const LAST_LOCAL_DOWNLOAD_KEY = "last_local_download";
+    const BACKUP_PASSWORD = "3508";
+    const LAST_PULL_KEY = "roza_last_sheet_pull";
+    const LAST_LOCAL_UPDATE_KEY = "rgce_local_updated";
+
+    /* ============================================================
+       TRANSACTION TRACKING GOOGLE SHEET CONFIG
+       ============================================================ */
+    const TXN_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjSmRW5d9oPxWij-aRYZvz_7_RATW6AN2TRp5FvvdCYg7AWdc5jHlEJ-NdMZwnNyhAOQ/exec";
+    const TXN_SPREADSHEET_ID = "1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ";
+    const TXN_SHEET_PREVIEW_URL = "https://docs.google.com/spreadsheets/d/1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ/preview?rm=minimal&widget=true&headers=false&single=true";
+    const TXN_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ/edit";
+    const TXN_LAST_SYNC_KEY = "rgce_last_txn_sync";
+    const TXN_REFRESH_INTERVAL_MS = 30000;
+
+    const FIXED_ADDRESS_LIST = [
+      "Kh P","Naohata Mor","Chowmashiya","Bagdhana","Fulbari","Mohadevpur, Naogaon",
+      "Naogaon","D. Kh P","Ranipukur","Shikarpur","Palpara","Saraswatipur","Rishipara",
+      "Naripara, Kh P","Jalalpur","Sardarpara, Kh P","Dewanpara, Kh P","Sharuppur",
+      "Kumirpukur","Sonapur","Lolobolo","Vimpur","Munshipara, Kh P","Khalishakuri, Kh P"
+    ];
+
+    /* ============================================================
+       SEARCH BAR STATE
+       ============================================================ */
+    const SEARCH_STATE_KEY = "rgce_searchbar_state_v1";
+    let searchState = { floating:false, locked:false, left:20, top:100, width:400, height:44 };
+
+    /* ============================================================
+       APP STATE
+       ============================================================ */
+    let customers = [];
+    let filteredCustomers = [];
+    let currentPage = 1;
+    let pageSize = 35;
+    let sortColumn = null;
+    let sortDirection = 'asc';
+    let formVisible = false;
+    let lastBackupDownload = null;
+    let lastSyncTime = null;
+    let telegramToken = localStorage.getItem(TELEGRAM_TOKEN_KEY) || '';
+    let telegramChatId = localStorage.getItem(TELEGRAM_CHAT_KEY) || '';
+    let autoSyncTimer = null;
+
+    let txnFilters = { search:'', type:'', customer:'', dateFrom:'', dateTo:'' };
+    let txnSheetData = [];
+    let txnRefreshTimer = null;
+    let txnOnline = false;
+
+    /* ============================================================
+       CLOUD / FIREBASE STATE
+       ============================================================ */
+    let currentUser = null;
+    let cloudSyncInFlight = false;
+    let cloudPushTimer = null;
+    let cloudPullTimer = null;
+    let lastPushedHash = "";
+
+    /* ============================================================
+       UTILITIES
+       ============================================================ */
+    function formatMoney(val) {
+      if (val === undefined || val === null || val === 0) return '';
+      return Math.round(val).toLocaleString('en-US');
+    }
+    function formatMoneyOrZero(val) { return Math.round(val||0).toLocaleString('en-US'); }
+    function getCurrentDue(c) { return Math.max(0, (c.due || 0) - (c.paid || 0)); }
+    function getStatus(c) {
+      const due = c.due || 0, paid = c.paid || 0;
+      const cd = getCurrentDue(c);
+      if (due === 0 && paid === 0) return "Hidden Due";
+      if (cd > 0 && paid === 0) return "Due";
+      if (cd > 0 && paid > 0) return "Partial Paid";
+      return "Paid";
+    }
+    function statusClass(status) {
+      switch (status) {
+        case "Paid": return "status-paid";
+        case "Partial Paid": return "status-partial";
+        case "Due": return "status-due";
+        case "Hidden Due": return "status-hidden";
+        default: return "";
+      }
+    }
+    function generateId() { return Date.now().toString().slice(-10) + Math.floor(Math.random()*1000); }
+    function todayDDMMYYYY() {
+      const d = new Date();
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+    function titleCase(str) {
+      return (str||'').replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+    function showToast(msg, type='info', duration=4000) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = msg;
+      toast.addEventListener('click', () => toast.remove());
+      container.appendChild(toast);
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, duration);
+    }
+    function triggerPrint(html) {
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = html;
+      void printArea.offsetHeight;
+      setTimeout(() => {
+        try { window.print(); }
+        catch (e) { console.error('Print failed:', e); showToast('Print failed.', 'error'); }
+      }, 180);
+    }
+    function parseTxnDate(str) {
+      if (!str) return null;
+      let d = new Date(str);
+      if (!isNaN(d.getTime())) return d;
+      const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (m) {
+        d = new Date(parseInt(m[3],10), parseInt(m[2],10)-1, parseInt(m[1],10),
+                     parseInt(m[4]||'0',10), parseInt(m[5]||'0',10), parseInt(m[6]||'0',10));
+        if (!isNaN(d.getTime())) return d;
+      }
+      return null;
+    }
+
+    /* ============================================================
+       CLOUD STATUS UI
+       ============================================================ */
+    function updateCloudBadge(status, text) {
+      const el = document.getElementById('cloudStatusBadge');
+      if (!el) return;
+      el.classList.remove('online','offline','syncing');
+      if (status) el.classList.add(status);
+      el.innerHTML = `<span class="dot"></span>${text || 'Cloud'}`;
+    }
+
+    /* ============================================================
+       SEARCH BAR: DRAG / RESIZE / LOCK
+       ============================================================ */
+    function loadSearchState() {
+      try {
+        const raw = localStorage.getItem(SEARCH_STATE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') searchState = Object.assign(searchState, parsed);
+        }
+      } catch (e) {}
+    }
+    function saveSearchState() {
+      try { localStorage.setItem(SEARCH_STATE_KEY, JSON.stringify(searchState)); } catch (e) {}
+    }
+    function applySearchState() {
+      const wrap = document.getElementById('searchWrapper');
+      if (!wrap) return;
+      wrap.classList.toggle('floating', !!searchState.floating);
+      wrap.classList.toggle('inline', !searchState.floating);
+      wrap.classList.toggle('locked', !!searchState.locked);
+      if (searchState.floating) {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const w = Math.max(220, Math.min(searchState.width || 400, vw - 20));
+        const h = Math.max(44, Math.min(searchState.height || 44, vh - 20));
+        const x = Math.max(0, Math.min(searchState.left || 20, vw - w - 4));
+        const y = Math.max(0, Math.min(searchState.top || 100, vh - h - 4));
+        wrap.style.left = x + 'px';
+        wrap.style.top = y + 'px';
+        wrap.style.width = w + 'px';
+        searchState.left = x; searchState.top = y; searchState.width = w; searchState.height = h;
+      } else {
+        wrap.style.left = ''; wrap.style.top = ''; wrap.style.width = '';
+      }
+      const floatBtn = document.getElementById('searchFloatBtn');
+      const lockBtn = document.getElementById('searchLockBtn');
+      const lockIndicator = document.getElementById('searchLockIndicator');
+      const handleLabel = document.getElementById('searchHandleLabel');
+      if (floatBtn) {
+        floatBtn.classList.toggle('active', !!searchState.floating);
+        floatBtn.title = searchState.floating ? 'Attach to page' : 'Detach as floating';
+        floatBtn.innerHTML = searchState.floating ? '<i class="fas fa-thumbtack"></i>' : '<i class="fas fa-arrows-alt"></i>';
+      }
+      if (lockBtn) {
+        lockBtn.classList.toggle('active', !!searchState.locked);
+        lockBtn.title = searchState.locked ? 'Unlock position' : 'Lock position';
+        lockBtn.innerHTML = searchState.locked ? '<i class="fas fa-lock"></i>' : '<i class="fas fa-lock-open"></i>';
+      }
+      if (lockIndicator) lockIndicator.textContent = searchState.locked ? '🔒 LOCKED' : '';
+      if (handleLabel) {
+        handleLabel.textContent = searchState.floating
+          ? (searchState.locked ? 'Search Bar (Locked)' : 'Search Bar — drag to move')
+          : 'Search Bar';
+      }
+    }
+    function makeDraggable() {
+      const wrap = document.getElementById('searchWrapper');
+      const handle = document.getElementById('searchDragHandle');
+      if (!wrap || !handle) return;
+      let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+      handle.addEventListener('pointerdown', (e) => {
+        if (searchState.locked || !searchState.floating) return;
+        dragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startLeft = parseInt(wrap.style.left, 10) || 0;
+        startTop = parseInt(wrap.style.top, 10) || 0;
+        e.preventDefault();
+      });
+      document.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const w = wrap.offsetWidth, h = wrap.offsetHeight;
+        const vw = window.innerWidth, vh = window.innerHeight;
+        let nx = startLeft + (e.clientX - startX);
+        let ny = startTop + (e.clientY - startY);
+        nx = Math.max(0, Math.min(nx, vw - w - 4));
+        ny = Math.max(0, Math.min(ny, vh - h - 4));
+        wrap.style.left = nx + 'px';
+        wrap.style.top = ny + 'px';
+        searchState.left = nx; searchState.top = ny;
+      });
+      document.addEventListener('pointerup', () => {
+        if (dragging) { dragging = false; saveSearchState(); }
+      });
+    }
+    function makeResizable() {
+      const wrap = document.getElementById('searchWrapper');
+      const handle = document.getElementById('searchResizeHandle');
+      if (!wrap || !handle) return;
+      let resizing = false, startX = 0, startW = 0;
+      handle.addEventListener('pointerdown', (e) => {
+        if (searchState.locked || !searchState.floating) return;
+        resizing = true;
+        startX = e.clientX; startW = wrap.offsetWidth;
+        e.preventDefault(); e.stopPropagation();
+      });
+      document.addEventListener('pointermove', (e) => {
+        if (!resizing) return;
+        const vw = window.innerWidth;
+        const left = parseInt(wrap.style.left, 10) || 0;
+        let nw = startW + (e.clientX - startX);
+        nw = Math.max(220, Math.min(nw, vw - left - 4));
+        wrap.style.width = nw + 'px';
+        searchState.width = nw;
+      });
+      document.addEventListener('pointerup', () => {
+        if (resizing) { resizing = false; saveSearchState(); }
+      });
+    }
+    function initSearchBarControls() {
+      const floatBtn = document.getElementById('searchFloatBtn');
+      const lockBtn = document.getElementById('searchLockBtn');
+      const resetBtn = document.getElementById('searchResetBtn');
+      if (floatBtn) floatBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (searchState.locked) { showToast('Search bar is locked. Unlock first.', 'warning'); return; }
+        searchState.floating = !searchState.floating;
+        if (searchState.floating) {
+          const rect = document.getElementById('searchWrapper').getBoundingClientRect();
+          searchState.left = Math.max(0, rect.left);
+          searchState.top = Math.max(0, rect.top);
+          searchState.width = Math.max(240, rect.width);
+          showToast('Search bar detached. Drag to move.', 'info');
+        } else {
+          showToast('Search bar attached.', 'info');
+        }
+        saveSearchState(); applySearchState();
+      });
+      if (lockBtn) lockBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        searchState.locked = !searchState.locked;
+        saveSearchState(); applySearchState();
+        showToast(searchState.locked ? 'Position locked 🔒' : 'Position unlocked 🔓', 'info');
+      });
+      if (resetBtn) resetBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        searchState = { floating:false, locked:false, left:20, top:100, width:400, height:44 };
+        saveSearchState(); applySearchState();
+        showToast('Search bar reset.', 'success');
+      });
+      window.addEventListener('resize', applySearchState);
+    }
+
+    /* ============================================================
+       ADDRESS FILTER DROPDOWN
+       ============================================================ */
+    function refreshAddressFilter() {
+      const sel = document.getElementById('filterAddress');
+      if (!sel) return;
+      const previous = sel.value;
+      const used = new Set();
+      customers.forEach(c => { if (c.address && c.address.trim() !== '') used.add(c.address); });
+      const all = new Set([...FIXED_ADDRESS_LIST, ...used]);
+      const sorted = [...all].sort((a,b) => a.localeCompare(b));
+      sel.innerHTML = '';
+      const optAll = document.createElement('option');
+      optAll.value = ''; optAll.textContent = 'All';
+      sel.appendChild(optAll);
+      sorted.forEach(addr => {
+        const opt = document.createElement('option');
+        opt.value = addr; opt.textContent = addr;
+        sel.appendChild(opt);
+      });
+      if (previous && sorted.includes(previous)) sel.value = previous;
+      else sel.value = '';
+    }
+
+    /* ============================================================
+       STORAGE
+       ============================================================ */
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          customers = JSON.parse(raw);
+          if (!Array.isArray(customers)) customers = [];
+          customers = customers.map(c => {
+            c.id = c.id || generateId();
+            c.due = Math.round(Number(c.due)) || 0;
+            c.paid = Math.round(Number(c.paid)) || 0;
+            c.note = c.note || "";
+            c.address = c.address || "";
+            c.source = c.source || "";
+            c.phone = c.phone || "";
+            c.dateAdded = c.dateAdded || todayDDMMYYYY();
+            if (!c.transactionHistory) c.transactionHistory = [];
+            return c;
+          });
+        } catch (e) { customers = []; }
+      } else { customers = []; }
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+      localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
+      triggerAutoSync();
+      if (typeof cloudSchedule === 'function') cloudSchedule();
+    }
+
+    function triggerAutoSync() {
+      if (customers.length === 0) return;
+      clearTimeout(autoSyncTimer);
+      autoSyncTimer = setTimeout(() => { syncToGoogleSheets(true); }, 5000);
+    }
+
+    /* ============================================================
+       CLOUD AUTH + SYNC
+       ============================================================ */
+    function translateAuthError(code) {
+      const map = {
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/user-not-found': 'No account with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-credential': 'Wrong email or password.',
+        'auth/too-many-requests': 'Too many attempts. Wait a few minutes.',
+        'auth/network-request-failed': 'Network error. Check internet.',
+        'auth/user-disabled': 'Account disabled.'
+      };
+      return map[code] || 'Login failed: ' + code;
+    }
+
+    function setupAuth() {
+      const overlay = document.getElementById('authOverlay');
+      const msgEl = document.getElementById('authMsg');
+      const loginBtn = document.getElementById('authLoginBtn');
+      const resetBtn = document.getElementById('authResetBtn');
+      const emailInput = document.getElementById('authEmail');
+      const passInput = document.getElementById('authPass');
+
+      function setMsg(text, type) {
+        msgEl.textContent = text;
+        msgEl.className = type || '';
+      }
+
+      loginBtn.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        const pass = passInput.value;
+        if (!email || !pass) { setMsg('Enter email and password.', 'error'); return; }
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in…';
+        setMsg('Connecting to cloud…');
+        try {
+          await window.FB.signInWithEmailAndPassword(window.FB.auth, email, pass);
+        } catch (e) {
+          setMsg(translateAuthError(e.code || e.message), 'error');
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Login';
+        }
+      });
+      passInput.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
+      emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
+
+      resetBtn.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        if (!email) { setMsg('Enter your email first.', 'error'); return; }
+        try {
+          await window.FB.sendPasswordResetEmail(window.FB.auth, email);
+          setMsg('Reset link sent. Check your email.', 'success');
+        } catch (e) {
+          setMsg(translateAuthError(e.code || e.message), 'error');
+        }
+      });
+
+      window.FB.onAuthStateChanged(window.FB.auth, async (user) => {
+        currentUser = user;
+        window.__currentUser = user;
+        if (user) {
+          overlay.style.display = 'none';
+          updateCloudBadge('syncing', 'Syncing…');
+          await cloudLoad();
+          cloudStartAutoSync();
+          showToast('☁️ Connected as ' + user.email, 'success');
+        } else {
+          overlay.style.display = 'flex';
+          cloudStopAutoSync();
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Login';
+        }
+      });
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          if (!confirm('Logout? Local data stays on this device.')) return;
+          try { await window.FB.signOut(window.FB.auth); showToast('Logged out.', 'info'); } catch(e) {}
+        });
+      }
+    }
+
+    async function cloudLoad() {
+      if (!currentUser) return;
+      try {
+        const ref = window.FB.doc(window.FB.db, 'shops', currentUser.uid);
+        const snap = await window.FB.getDoc(ref);
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        const localData = localRaw ? JSON.parse(localRaw) : [];
+        const localTime = parseInt(localStorage.getItem(LAST_LOCAL_UPDATE_KEY) || '0', 10);
+
+        if (snap.exists()) {
+          const cloud = snap.data();
+          const cloudCustomers = cloud.customers || [];
+          const cloudTime = cloud.updatedAt?.seconds ? cloud.updatedAt.seconds * 1000 : 0;
+          if (cloudCustomers.length === 0 && localData.length > 0) {
+            await cloudPush(true);
+            updateCloudBadge('online', 'Cloud: Synced');
+            return;
+          }
+          if (cloudTime > localTime || cloudCustomers.length > localData.length) {
+            customers = cloudCustomers;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+            localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
+            lastPushedHash = JSON.stringify(customers);
+            refreshAddressFilter();
+            renderTable();
+            showToast(`☁️ Loaded ${customers.length} customers from cloud`, 'info');
+          } else {
+            await cloudPush(true);
+          }
+        } else {
+          await cloudPush(true);
+        }
+        updateCloudBadge('online', 'Cloud: Synced');
+      } catch (e) {
+        console.error('Cloud load failed:', e);
+        updateCloudBadge('offline', 'Cloud: Error');
+        showToast('Cloud load failed: ' + e.message, 'error');
+      }
+    }
+
+    async function cloudPush(silent) {
+      if (!currentUser || cloudSyncInFlight) return;
+      cloudSyncInFlight = true;
+      updateCloudBadge('syncing', 'Syncing…');
+      try {
+        const ref = window.FB.doc(window.FB.db, 'shops', currentUser.uid);
+        await window.FB.setDoc(ref, {
+          ownerEmail: currentUser.email,
+          customers: customers,
+          customerCount: customers.length,
+          updatedAt: window.FB.serverTimestamp(),
+          appVersion: '1.5-cloud'
+        }, { merge: true });
+        lastPushedHash = JSON.stringify(customers);
+        localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
+        updateCloudBadge('online', 'Cloud: Synced');
+        if (!silent) showToast('☁️ Synced to cloud', 'success');
+      } catch (e) {
+        console.error('Cloud push failed:', e);
+        updateCloudBadge('offline', 'Cloud: Offline');
+        if (!silent) showToast('Cloud sync failed: ' + e.message, 'error');
+      } finally {
+        cloudSyncInFlight = false;
+      }
+    }
+
+    function cloudSchedule() {
+      if (!currentUser) return;
+      clearTimeout(cloudPushTimer);
+      cloudPushTimer = setTimeout(() => cloudPush(true), 2000);
+    }
+
+    function cloudStartAutoSync() {
+      if (cloudPullTimer) clearInterval(cloudPullTimer);
+      cloudPullTimer = setInterval(async () => {
+        if (!currentUser) return;
+        try {
+          const ref = window.FB.doc(window.FB.db, 'shops', currentUser.uid);
+          const snap = await window.FB.getDoc(ref);
+          if (!snap.exists()) return;
+          const cloud = snap.data();
+          const cloudCustomers = cloud.customers || [];
+          const cloudJSON = JSON.stringify(cloudCustomers);
+          const localJSON = JSON.stringify(customers);
+          if (cloudJSON !== localJSON && cloudJSON !== lastPushedHash) {
+            const cloudTime = cloud.updatedAt?.seconds ? cloud.updatedAt.seconds * 1000 : 0;
+            const localTime = parseInt(localStorage.getItem(LAST_LOCAL_UPDATE_KEY) || '0', 10);
+            if (cloudTime > localTime) {
+              customers = cloudCustomers;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+              lastPushedHash = cloudJSON;
+              refreshAddressFilter();
+              renderTable();
+              showToast('🔄 Updated from cloud', 'info');
+            }
+          }
+        } catch (e) {}
+      }, 30000);
+    }
+
+    function cloudStopAutoSync() {
+      clearTimeout(cloudPushTimer);
+      if (cloudPullTimer) { clearInterval(cloudPullTimer); cloudPullTimer = null; }
+    }
+
+    window.__cloudPush = cloudPush;
+    window.__cloudSchedule = cloudSchedule;
+    window.__updateCloudBadge = updateCloudBadge;
+
+    /* ============================================================
+       GOOGLE SHEETS PUSH (customers)
+       ============================================================ */
+    async function syncToGoogleSheets(silent = false) {
+      if (!APPS_SCRIPT_URL) { if (!silent) showToast('Google Sheets not configured.', 'error'); return; }
+      if (customers.length === 0) { if (!silent) showToast('No customers to sync.', 'warning'); return; }
+      const statusEl = document.getElementById('lastSyncTop');
+      const originalText = statusEl ? statusEl.textContent : '';
+      if (statusEl) statusEl.textContent = 'Syncing...';
+      try {
+        const sheetData = customers.map((customer, index) => {
+          const currentDue = getCurrentDue(customer);
+          return {
+            ID: customer.id || `CUST-${index + 1}`,
+            Date: customer.dateAdded || todayDDMMYYYY(),
+            Name: titleCase(customer.name) || 'Unnamed',
+            Phone: customer.phone || 'N/A',
+            Address: titleCase(customer.address) || 'N/A',
+            Due: customer.due || 0,
+            Paid: customer.paid || 0,
+            'Current Due': currentDue,
+            Status: getStatus(customer),
+            Source: customer.source || 'N/A',
+            Notes: (customer.note || '').substring(0, 200),
+            'Last Sync': new Date().toLocaleString('en-GB')
+          };
+        });
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'updateSheet',
+            spreadsheetId: SPREADSHEET_ID,
+            sheetName: 'Sheet1',
+            data: sheetData
+          }),
+          redirect: 'follow'
+        });
+        const now = new Date();
+        localStorage.setItem(LAST_SYNC_KEY, now.toISOString());
+        lastSyncTime = now;
+        if (statusEl) statusEl.textContent = 'Last Sync: ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if (!silent) showToast(`✅ ${sheetData.length} customers synced to Google Sheets`, 'success');
+      } catch (error) {
+        console.error('Sync error:', error);
+        if (statusEl) statusEl.textContent = originalText;
+        if (!silent) showToast('Sync failed: ' + error.message, 'error');
+      }
+    }
+
+    async function pullFromGoogleSheets(silent = false) {
+      if (!APPS_SCRIPT_URL) { if (!silent) showToast('Google Sheets not configured.', 'error'); return; }
+      const pullBtn = document.getElementById('pullFromSheetBtn');
+      const originalText = pullBtn ? pullBtn.textContent : '';
+      if (pullBtn) { pullBtn.disabled = true; pullBtn.textContent = 'Pulling...'; }
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getSheetData', spreadsheetId: SPREADSHEET_ID, sheetName: 'Sheet1' }),
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rawText = await res.text();
+        let json;
+        try { json = JSON.parse(rawText); }
+        catch (e) { throw new Error('Sheet returned invalid JSON.'); }
+        if (!json.success || !Array.isArray(json.data)) throw new Error(json.error || 'Invalid data received');
+        const pulledCustomers = json.data
+          .filter(row => row.Name && row.ID)
+          .map(row => ({
+            id: row.ID || generateId(),
+            dateAdded: row.Date || todayDDMMYYYY(),
+            name: row.Name,
+            phone: row.Phone !== 'N/A' ? row.Phone : '',
+            address: row.Address !== 'N/A' ? row.Address : '',
+            due: Math.round(Number(row.Due)) || 0,
+            paid: Math.round(Number(row.Paid)) || 0,
+            source: row.Source !== 'N/A' ? row.Source : '',
+            note: row.Notes || '',
+            transactionHistory: []
+          }));
+        if (pulledCustomers.length === 0) {
+          if (!silent) showToast('No valid customer data found.', 'warning');
+          return;
+        }
+        if (!confirm(`Pull ${pulledCustomers.length} customers from Google Sheet?\n\nThis will replace all local data. Continue?`)) return;
+        customers = pulledCustomers;
+        saveData();
+        refreshAddressFilter();
+        renderTable();
+        localStorage.setItem(LAST_PULL_KEY, new Date().toISOString());
+        if (!silent) showToast(`✅ ${pulledCustomers.length} customers pulled.`, 'success');
+      } catch (error) {
+        console.error('Pull error:', error);
+        if (!silent) showToast('Pull failed: ' + error.message, 'error');
+      } finally {
+        if (pullBtn) { pullBtn.disabled = false; pullBtn.textContent = originalText; }
+      }
+    }
+
+    /* ============================================================
+       TELEGRAM BACKUP
+       ============================================================ */
+    function updateTelegramStatus() {
+      const box = document.getElementById('telegramStatusText');
+      if (!box) return;
+      if (telegramToken && telegramChatId) {
+        const last = localStorage.getItem('last_telegram_backup');
+        if (!last) { box.textContent = 'Ready'; return; }
+        const diff = Date.now() - parseInt(last, 10);
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) box.textContent = 'Backed up: Now';
+        else if (mins < 60) box.textContent = `Backed up: ${mins}m ago`;
+        else if (mins < 1440) box.textContent = `Backed up: ${Math.floor(mins/60)}h ago`;
+        else box.textContent = `Backed up: ${Math.floor(mins/1440)}d ago`;
+      } else { box.textContent = 'Not configured'; }
+    }
+    async function sendTelegramBackup() {
+      if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
+      if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.5' };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const formData = new FormData();
+      formData.append('chat_id', telegramChatId);
+      formData.append('document', blob, `rgce_backup_${Date.now()}.json`);
+      formData.append('caption', `📊 ${customers.length} customers | ${new Date().toLocaleDateString()}`);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendDocument`, {
+          method: 'POST', body: formData, signal: controller.signal
+        });
+        clearTimeout(timeout);
+        const data = await res.json();
+        if (data.ok) {
+          localStorage.setItem('last_telegram_backup', Date.now().toString());
+          updateTelegramStatus();
+          showToast('✅ Telegram backup sent.', 'success');
+        } else { showToast('Telegram error: ' + (data.description || 'unknown'), 'error'); }
+      } catch (e) { showToast('Telegram backup failed: ' + e.message, 'error'); }
+    }
+
+    /* ============================================================
+       TRANSACTION SHEET API
+       ============================================================ */
+    function txnApiConfigured() {
+      return TXN_APPS_SCRIPT_URL && TXN_APPS_SCRIPT_URL.indexOf('PASTE_') === -1 && TXN_APPS_SCRIPT_URL.startsWith('http');
+    }
+    function txnTypeClass(type) {
+      const t = (type || '').toLowerCase();
+      if (t.includes('payment received') || t.includes('receive')) return 'received';
+      if (t.includes('due added') || t.includes('due')) return 'due-added';
+      if (t.includes('adjust')) return 'adjustment';
+      if (t.includes('edit')) return 'edit';
+      return 'other';
+    }
+    function txnAmountSign(type) {
+      const t = (type || '').toLowerCase();
+      if (t.includes('payment received') || t.includes('receive')) return 'positive';
+      if (t.includes('due added')) return 'negative';
+      return 'neutral';
+    }
+    function updateTxnLiveBadge(status) {
+      const el = document.getElementById('txnLiveBadge');
+      if (!el) return;
+      el.classList.remove('online','offline','syncing');
+      let text = 'Checking…';
+      if (status === 'online')  { el.classList.add('online');  text = 'Live · Connected'; }
+      if (status === 'offline') { el.classList.add('offline'); text = 'Offline'; }
+      if (status === 'syncing') { el.classList.add('syncing'); text = 'Syncing…'; }
+      el.innerHTML = `<span class="dot"></span>${text}`;
+    }
+
+    async function fetchTxnFromSheet(silent = false) {
+      if (!txnApiConfigured()) {
+        txnOnline = false;
+        updateTxnLiveBadge('offline');
+        if (!silent) showToast('Transaction sheet not configured.', 'error');
+        return null;
+      }
+      updateTxnLiveBadge('syncing');
+      try {
+        const res = await fetch(TXN_APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getTxnData', spreadsheetId: TXN_SPREADSHEET_ID }),
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const raw = await res.text();
+        let json;
+        try { json = JSON.parse(raw); }
+        catch (e) { throw new Error('Sheet returned invalid JSON.'); }
+        if (!json.success || !Array.isArray(json.data)) throw new Error(json.error || 'Invalid data');
+        txnSheetData = json.data;
+        txnOnline = true;
+        localStorage.setItem(TXN_LAST_SYNC_KEY, new Date().toISOString());
+        updateTxnLiveBadge('online');
+        return txnSheetData;
+      } catch (err) {
+        console.error('Txn fetch error:', err);
+        txnOnline = false;
+        updateTxnLiveBadge('offline');
+        if (!silent) showToast('Sheet fetch failed: ' + err.message, 'error');
+        return null;
+      }
+    }
+
+    async function pushTxnToSheet(record, silent = false) {
+      if (!txnApiConfigured()) {
+        if (!silent) showToast('Transaction sheet not configured.', 'error');
+        return false;
+      }
+      try {
+        const res = await fetch(TXN_APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'addTxn', spreadsheetId: TXN_SPREADSHEET_ID, record: record }),
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = JSON.parse(await res.text());
+        if (!json.success) throw new Error(json.error || 'Push failed');
+        return true;
+      } catch (err) {
+        console.error('Txn push error:', err);
+        if (!silent) showToast('Sheet push failed: ' + err.message, 'error');
+        return false;
+      }
+    }
+
+    async function pushTxnBatchToSheet(records, silent = false) {
+      if (!txnApiConfigured() || !Array.isArray(records) || records.length === 0) return false;
+      try {
+        const res = await fetch(TXN_APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'addTxnBatch', spreadsheetId: TXN_SPREADSHEET_ID, records: records }),
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = JSON.parse(await res.text());
+        if (!json.success) throw new Error(json.error || 'Batch push failed');
+        return true;
+      } catch (err) {
+        console.error('Txn batch push error:', err);
+        if (!silent) showToast('Batch push failed: ' + err.message, 'error');
+        return false;
+      }
+    }
+
+    function buildTxnRecord(customer, txn) {
+      return {
+        TxnID: 'TXN-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
+        Timestamp: new Date().toISOString(),
+        CustomerID: customer.id || '',
+        CustomerName: customer.name || '',
+        CustomerPhone: customer.phone || '',
+        CustomerAddress: customer.address || '',
+        Type: txn.type || '',
+        Amount: Number(txn.amount) || 0,
+        Note: txn.note || ''
+      };
+    }
+
+    async function logTxn(customer, txn) {
+      customer.transactionHistory = customer.transactionHistory || [];
+      customer.transactionHistory.unshift({
+        date: new Date().toLocaleString(),
+        type: txn.type || '',
+        amount: Number(txn.amount) || 0,
+        note: txn.note || ''
+      });
+      if (customer.transactionHistory.length > 50) customer.transactionHistory.length = 50;
+
+      if (txnApiConfigured()) {
+        const rec = buildTxnRecord(customer, txn);
+        pushTxnToSheet(rec, true).then(ok => {
+          if (ok) {
+            txnSheetData.unshift(rec);
+            if (document.getElementById('txnTableWrap')) {
+              renderTxnStats();
+              renderTxnTable();
+            }
+          }
+        });
+      }
+    }
+
+    async function uploadAllLocalTxnsToSheet() {
+      const records = [];
+      customers.forEach(c => {
+        (c.transactionHistory || []).forEach(t => {
+          records.push({
+            TxnID: 'TXN-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
+            Timestamp: parseTxnDate(t.date) ? parseTxnDate(t.date).toISOString() : new Date().toISOString(),
+            CustomerID: c.id || '',
+            CustomerName: c.name || '',
+            CustomerPhone: c.phone || '',
+            CustomerAddress: c.address || '',
+            Type: t.type || '',
+            Amount: Number(t.amount) || 0,
+            Note: t.note || ''
+          });
+        });
+      });
+      if (records.length === 0) { showToast('No local transactions to upload.', 'warning'); return; }
+      if (!confirm(`Upload ${records.length} local transactions to the Google Sheet?`)) return;
+      updateTxnLiveBadge('syncing');
+      const ok = await pushTxnBatchToSheet(records, false);
+      if (ok) {
+        showToast(`✅ ${records.length} transactions uploaded.`, 'success');
+        await fetchTxnFromSheet(true);
+        if (document.getElementById('txnTableWrap')) {
+          renderTxnStats();
+          renderTxnTable();
+        }
+      }
+      updateTxnLiveBadge(ok ? 'online' : 'offline');
+    }
+
+    /* ============================================================
+       TRANSACTION TRACKING — CORE
+       ============================================================ */
+    function buildAllTransactions() {
+      if (txnOnline && txnSheetData.length > 0) {
+        return txnSheetData.map(r => ({
+          customerId: r.CustomerID,
+          customerName: r.CustomerName || 'Unnamed',
+          customerPhone: r.CustomerPhone || '',
+          customerAddress: r.CustomerAddress || '',
+          date: r.Timestamp ? new Date(r.Timestamp).toLocaleString() : '',
+          type: r.Type || 'Unknown',
+          amount: Number(r.Amount) || 0,
+          note: r.Note || ''
+        })).sort((a, b) => {
+          const da = parseTxnDate(a.date), db = parseTxnDate(b.date);
+          if (da && db) return db - da;
+          return (b.date || '').localeCompare(a.date || '');
+        });
+      }
+      const list = [];
+      customers.forEach(c => {
+        (c.transactionHistory || []).forEach((t) => {
+          list.push({
+            customerId: c.id,
+            customerName: c.name || 'Unnamed',
+            customerPhone: c.phone || '',
+            customerAddress: c.address || '',
+            date: t.date || '',
+            type: t.type || 'Unknown',
+            amount: Number(t.amount) || 0,
+            note: t.note || ''
+          });
+        });
+      });
+      list.sort((a, b) => {
+        const da = parseTxnDate(a.date), db = parseTxnDate(b.date);
+        if (da && db) return db - da;
+        return (b.date || '').localeCompare(a.date || '');
+      });
+      return list;
+    }
+
+    function filterTransactions(all) {
+      const q = (txnFilters.search || '').trim().toLowerCase();
+      const typeFilter = txnFilters.type || '';
+      const custFilter = txnFilters.customer || '';
+      const from = txnFilters.dateFrom ? new Date(txnFilters.dateFrom + 'T00:00:00') : null;
+      const to = txnFilters.dateTo ? new Date(txnFilters.dateTo + 'T23:59:59') : null;
+      return all.filter(t => {
+        if (q) {
+          const hay = `${t.customerName} ${t.customerPhone} ${t.note} ${t.type}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        if (typeFilter) {
+          const tLow = (t.type || '').toLowerCase();
+          const fLow = typeFilter.toLowerCase();
+          if (fLow === 'payment received' && !tLow.includes('payment received') && !tLow.includes('receive')) return false;
+          if (fLow === 'due added' && !tLow.includes('due added')) return false;
+          if (fLow === 'adjustment' && !tLow.includes('adjust')) return false;
+          if (fLow === 'edit adjustment' && !tLow.includes('edit')) return false;
+        }
+        if (custFilter && t.customerId !== custFilter) return false;
+        if (from || to) {
+          const td = parseTxnDate(t.date);
+          if (!td) return false;
+          if (from && td < from) return false;
+          if (to && td > to) return false;
+        }
+        return true;
+      });
+    }
+
+    function openTransactionTracking() {
+      const custOptions = customers
+        .slice()
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+        .map(c => `<option value="${c.id}" ${txnFilters.customer === c.id ? 'selected' : ''}>${c.name || 'Unnamed'} (${c.id})</option>`)
+        .join('');
+      const body = `
+        <div id="txnRoot">
+          <div class="txn-toolbar">
+            <div class="txn-tabs" style="margin-bottom:0;border-bottom:none;">
+              <button type="button" class="txn-tab active" data-txn-tab="list"><i class="fas fa-list"></i> Transactions</button>
+              <button type="button" class="txn-tab" data-txn-tab="sheet"><i class="fas fa-table"></i> Live Sheet</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="txn-live-badge" id="txnLiveBadge"><span class="dot"></span>Checking…</span>
+              <button type="button" class="btn btn-sm btn-outline" id="txnRefreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+          </div>
+          <div class="txn-pane active" id="txnPaneList">
+            <div class="txn-stats" id="txnStats"></div>
+            <div class="txn-filters">
+              <div class="filter-group">
+                <label>Search</label>
+                <input type="text" id="txnSearch" placeholder="Name, phone, note..." value="${(txnFilters.search || '').replace(/"/g, '&quot;')}">
+              </div>
+              <div class="filter-group">
+                <label>Type</label>
+                <select id="txnType">
+                  <option value="">All Types</option>
+                  <option value="Payment Received" ${txnFilters.type === 'Payment Received' ? 'selected' : ''}>Payment Received</option>
+                  <option value="Due Added" ${txnFilters.type === 'Due Added' ? 'selected' : ''}>Due Added</option>
+                  <option value="Adjustment" ${txnFilters.type === 'Adjustment' ? 'selected' : ''}>Adjustment</option>
+                  <option value="Edit Adjustment" ${txnFilters.type === 'Edit Adjustment' ? 'selected' : ''}>Edit Adjustment</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label>Customer</label>
+                <select id="txnCustomer">
+                  <option value="">All Customers</option>
+                  ${custOptions}
+                </select>
+              </div>
+              <div class="filter-group">
+                <label>From</label>
+                <input type="date" id="txnFrom" value="${txnFilters.dateFrom || ''}">
+              </div>
+              <div class="filter-group">
+                <label>To</label>
+                <input type="date" id="txnTo" value="${txnFilters.dateTo || ''}">
+              </div>
+            </div>
+            <div id="txnTableWrap"></div>
+          </div>
+          <div class="txn-pane" id="txnPaneSheet">
+            <div class="info-box" style="margin-bottom:12px;">
+              <strong>Live Google Sheet</strong> — every change is auto-saved here. The panel refreshes every 30 seconds.
+            </div>
+            <iframe id="txnSheetFrame" class="txn-sheet-frame"
+              src="${TXN_SHEET_PREVIEW_URL}"
+              title="RGCE Transactions Live Sheet"></iframe>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline btn-sm" id="txnOpenSheetBtn"><i class="fas fa-external-link-alt"></i> Open in Google Sheets</button>
+              <button type="button" class="btn btn-outline btn-sm" id="txnReloadSheetBtn"><i class="fas fa-sync-alt"></i> Reload Preview</button>
+              <button type="button" class="btn btn-outline btn-sm" id="txnUploadLocalBtn"><i class="fas fa-cloud-upload-alt"></i> Upload All Local Transactions</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const footer = `
+        <button class="btn btn-outline" id="txnClearFiltersBtn"><i class="fas fa-times"></i> Clear Filters</button>
+        <button class="btn btn-primary" id="txnExportBtn"><i class="fas fa-print"></i> Print Statement</button>
+        <button class="btn" id="txnCloseBtn">Close</button>
+      `;
+      openModal('Transaction Tracking', body, footer, true);
+      updateTxnLiveBadge(txnApiConfigured() ? 'syncing' : 'offline');
+      if (txnApiConfigured()) {
+        fetchTxnFromSheet(true).then(() => { renderTxnStats(); renderTxnTable(); });
+      } else {
+        renderTxnStats(); renderTxnTable();
+      }
+      document.getElementById('txnCloseBtn').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-txn-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('[data-txn-tab]').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.txn-pane').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          const id = tab.dataset.txnTab;
+          document.getElementById(id === 'list' ? 'txnPaneList' : 'txnPaneSheet').classList.add('active');
+        });
+      });
+      const searchInp = document.getElementById('txnSearch');
+      const typeInp = document.getElementById('txnType');
+      const custInp = document.getElementById('txnCustomer');
+      const fromInp = document.getElementById('txnFrom');
+      const toInp = document.getElementById('txnTo');
+      function applyAndRender() {
+        txnFilters.search = searchInp.value;
+        txnFilters.type = typeInp.value;
+        txnFilters.customer = custInp.value;
+        txnFilters.dateFrom = fromInp.value;
+        txnFilters.dateTo = toInp.value;
+        renderTxnStats(); renderTxnTable();
+      }
+      searchInp.addEventListener('input', applyAndRender);
+      typeInp.addEventListener('change', applyAndRender);
+      custInp.addEventListener('change', applyAndRender);
+      fromInp.addEventListener('change', applyAndRender);
+      toInp.addEventListener('change', applyAndRender);
+      document.getElementById('txnClearFiltersBtn').addEventListener('click', () => {
+        txnFilters = { search:'', type:'', customer:'', dateFrom:'', dateTo:'' };
+        searchInp.value = ''; typeInp.value = ''; custInp.value = '';
+        fromInp.value = ''; toInp.value = '';
+        renderTxnStats(); renderTxnTable();
+        showToast('Filters cleared.', 'info');
+      });
+      document.getElementById('txnExportBtn').addEventListener('click', printTransactionStatement);
+      document.getElementById('txnRefreshBtn').addEventListener('click', async () => {
+        if (!txnApiConfigured()) { showToast('Apps Script URL not configured.', 'error'); return; }
+        const ok = await fetchTxnFromSheet(false);
+        if (ok) { renderTxnStats(); renderTxnTable(); showToast('✅ Sheet refreshed.', 'success'); }
+      });
+      document.getElementById('txnOpenSheetBtn').addEventListener('click', () => window.open(TXN_SHEET_EDIT_URL, '_blank'));
+      document.getElementById('txnReloadSheetBtn').addEventListener('click', () => {
+        const f = document.getElementById('txnSheetFrame');
+        if (f) f.src = TXN_SHEET_PREVIEW_URL + '&_=' + Date.now();
+        showToast('Sheet preview reloaded.', 'info');
+      });
+      document.getElementById('txnUploadLocalBtn').addEventListener('click', uploadAllLocalTxnsToSheet);
+
+      if (txnRefreshTimer) clearInterval(txnRefreshTimer);
+      txnRefreshTimer = setInterval(() => {
+        if (document.getElementById('txnTableWrap')) {
+          if (txnApiConfigured()) {
+            fetchTxnFromSheet(true).then(() => { renderTxnStats(); renderTxnTable(); });
+          }
+        } else {
+          clearInterval(txnRefreshTimer); txnRefreshTimer = null;
+        }
+      }, TXN_REFRESH_INTERVAL_MS);
+      renderTxnStats(); renderTxnTable();
+    }
+
+    function renderTxnStats() {
+      const all = buildAllTransactions();
+      const filtered = filterTransactions(all);
+      let totalReceived = 0, totalDueAdded = 0, totalAdjustments = 0;
+      filtered.forEach(t => {
+        const cls = txnTypeClass(t.type);
+        if (cls === 'received') totalReceived += Number(t.amount) || 0;
+        else if (cls === 'due-added') totalDueAdded += Number(t.amount) || 0;
+        else if (cls === 'adjustment') totalAdjustments += Number(t.amount) || 0;
+      });
+      const statsEl = document.getElementById('txnStats');
+      if (!statsEl) return;
+      statsEl.innerHTML = `
+        <div class="txn-stat-card"><div class="txn-stat-label">Total Transactions</div><div class="txn-stat-value neutral">${filtered.length}</div></div>
+        <div class="txn-stat-card"><div class="txn-stat-label">Payments Received</div><div class="txn-stat-value positive">${formatMoneyOrZero(totalReceived)}</div></div>
+        <div class="txn-stat-card"><div class="txn-stat-label">Due Added</div><div class="txn-stat-value negative">${formatMoneyOrZero(totalDueAdded)}</div></div>
+        <div class="txn-stat-card"><div class="txn-stat-label">Adjustments</div><div class="txn-stat-value neutral">${formatMoneyOrZero(totalAdjustments)}</div></div>
+      `;
+    }
+
+    function renderTxnTable() {
+      const all = buildAllTransactions();
+      const filtered = filterTransactions(all);
+      const wrap = document.getElementById('txnTableWrap');
+      if (!wrap) return;
+      const sourceNote = txnOnline
+        ? '<div class="info-box" style="margin-bottom:10px;font-size:12px;">🔴 <strong>Live from Google Sheet.</strong> Changes are saved in real time.</div>'
+        : '<div class="info-box-warning" style="margin-bottom:10px;font-size:12px;">⚠️ <strong>Offline.</strong> Showing local data only.</div>';
+      if (filtered.length === 0) {
+        wrap.innerHTML = sourceNote + `<div class="txn-empty"><i class="fas fa-receipt"></i>No transactions found.</div>`;
+        return;
+      }
+      const rows = filtered.map(t => {
+        const cls = txnTypeClass(t.type);
+        const sign = txnAmountSign(t.type);
+        const signSym = sign === 'positive' ? '+' : (sign === 'negative' ? '−' : '');
+        const safeName = (t.customerName || '').replace(/"/g, '&quot;');
+        return `
+          <tr>
+            <td>${t.date || '—'}</td>
+            <td><strong>${t.customerName}</strong>${t.customerPhone ? `<br><span class="text-muted" style="font-size:11px;">${t.customerPhone}</span>` : ''}</td>
+            <td><span class="txn-badge ${cls}">${t.type}</span></td>
+            <td class="txn-amount ${sign}">${signSym}${formatMoneyOrZero(t.amount)}</td>
+            <td>${t.note || '—'}</td>
+            <td><button type="button" class="btn-sm btn-outline" data-txn-view="${t.customerId || ''}" data-txn-name="${safeName}"><i class="fas fa-eye"></i> View</button></td>
+          </tr>
+        `;
+      }).join('');
+      wrap.innerHTML = sourceNote + `
+        <div style="overflow-x:auto;">
+          <table class="txn-table">
+            <thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Type</th><th>Amount</th><th>Notes</th><th>Action</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+      wrap.querySelectorAll('[data-txn-view]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const cid = btn.dataset.txnView || '';
+          const cname = btn.dataset.txnName || '';
+          let cust = cid ? customers.find(x => String(x.id) === String(cid)) : null;
+          if (!cust && cname) {
+            const lower = cname.toLowerCase();
+            cust = customers.find(x => (x.name || '').toLowerCase() === lower);
+          }
+          if (!cust) { showToast('Customer "' + (cname || cid || 'unknown') + '" not found.', 'warning'); return; }
+          closeModal();
+          setTimeout(() => openPreviewModal(cust.id), 260);
+        });
+      });
+    }
+
+    function printTransactionStatement() {
+      const all = buildAllTransactions();
+      const filtered = filterTransactions(all);
+      let totalReceived = 0, totalDueAdded = 0, totalAdjustments = 0;
+      filtered.forEach(t => {
+        const cls = txnTypeClass(t.type);
+        if (cls === 'received') totalReceived += Number(t.amount) || 0;
+        else if (cls === 'due-added') totalDueAdded += Number(t.amount) || 0;
+        else if (cls === 'adjustment') totalAdjustments += Number(t.amount) || 0;
+      });
+      const html = `
+        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',serif;color:#000;">
+          <h2 style="text-align:center;border-bottom:1px solid #000;padding-bottom:6px;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+          <p style="text-align:center;font-size:11px;">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon | +8801715986646</p>
+          <hr style="border-top:1px solid #000;">
+          <h3 style="text-align:center;">TRANSACTION STATEMENT</h3>
+          <p style="text-align:center;font-size:11px;">Generated: ${new Date().toLocaleString()}</p>
+          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;">
+            <thead><tr>
+              <th style="border:1px solid #000;padding:4px;">#</th>
+              <th style="border:1px solid #000;padding:4px;">Date &amp; Time</th>
+              <th style="border:1px solid #000;padding:4px;">Customer</th>
+              <th style="border:1px solid #000;padding:4px;">Type</th>
+              <th style="border:1px solid #000;padding:4px;">Amount</th>
+              <th style="border:1px solid #000;padding:4px;">Notes</th>
+            </tr></thead>
+            <tbody>
+              ${filtered.length === 0
+                ? `<tr><td colspan="6" style="text-align:center;border:1px solid #000;padding:8px;">No transactions match.</td></tr>`
+                : filtered.map((t, i) => `
+                  <tr>
+                    <td style="border:1px solid #000;padding:4px;">${i + 1}</td>
+                    <td style="border:1px solid #000;padding:4px;">${t.date || '—'}</td>
+                    <td style="border:1px solid #000;padding:4px;">${t.customerName}</td>
+                    <td style="border:1px solid #000;padding:4px;">${t.type}</td>
+                    <td style="border:1px solid #000;padding:4px;text-align:right;">${formatMoneyOrZero(t.amount)}</td>
+                    <td style="border:1px solid #000;padding:4px;">${t.note || ''}</td>
+                  </tr>
+                `).join('')}
+            </tbody>
+          </table>
+          <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;">
+            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Total Transactions</td><td style="border:1px solid #000;padding:6px;text-align:right;">${filtered.length}</td></tr>
+            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Payments Received</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalReceived)}</td></tr>
+            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Due Added</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalDueAdded)}</td></tr>
+            <tr><td style="border:1px solid #000;padding:6px;font-weight:700;">Adjustments</td><td style="border:1px solid #000;padding:6px;text-align:right;">${formatMoneyOrZero(totalAdjustments)}</td></tr>
+          </table>
+          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
+        </div>
+      `;
+      triggerPrint(html);
+    }
+
+    /* ============================================================
+       TABLE RENDER
+       ============================================================ */
+    function applyFilters() {
+      const search = (document.getElementById('globalSearch').value || '').trim().toLowerCase();
+      const addrFilter = document.getElementById('filterAddress').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+      const sourceFilter = document.getElementById('filterSource').value;
+      filteredCustomers = customers.filter(c => {
+        if (search) {
+          const haystack = `${c.name || ''} ${c.phone || ''} ${c.address || ''} ${c.source || ''}`.toLowerCase();
+          if (!haystack.includes(search)) return false;
+        }
+        if (addrFilter && c.address !== addrFilter) return false;
+        if (statusFilter && getStatus(c) !== statusFilter) return false;
+        if (sourceFilter && c.source !== sourceFilter) return false;
+        return true;
+      });
+    }
+    function sortFiltered() {
+      if (!sortColumn) return;
+      filteredCustomers.sort((a, b) => {
+        let va, vb;
+        switch (sortColumn) {
+          case 'sl': va = customers.indexOf(a); vb = customers.indexOf(b); break;
+          case 'name': va = (a.name || '').toLowerCase(); vb = (b.name || '').toLowerCase(); break;
+          case 'address': va = (a.address || '').toLowerCase(); vb = (b.address || '').toLowerCase(); break;
+          case 'source': va = (a.source || '').toLowerCase(); vb = (b.source || '').toLowerCase(); break;
+          case 'status': va = getStatus(a); vb = getStatus(b); break;
+          case 'due': va = a.due || 0; vb = b.due || 0; break;
+          case 'paid': va = a.paid || 0; vb = b.paid || 0; break;
+          case 'currentDue': va = getCurrentDue(a); vb = getCurrentDue(b); break;
+          default: return 0;
+        }
+        if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    function renderTable() {
+      applyFilters();
+      sortFiltered();
+      const tbody = document.getElementById('customerTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const total = filteredCustomers.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const end = Math.min(start + pageSize, total);
+      const pageItems = filteredCustomers.slice(start, end);
+
+      pageItems.forEach((c) => {
+        const tr = document.createElement('tr');
+        const status = getStatus(c);
+        const currentDue = getCurrentDue(c);
+        const sl = customers.indexOf(c) + 1;
+        if (status === "Due" || status === "Partial Paid") tr.classList.add('due-row');
+        tr.innerHTML = `
+          <td>${sl}</td>
+          <td class="left-align">${c.name || ''}</td>
+          <td class="left-align">${c.address || ''}</td>
+          <td>${c.source || ''}</td>
+          <td class="${statusClass(status)}">${status}</td>
+          <td>${formatMoney(c.due)}</td>
+          <td>${formatMoney(c.paid)}</td>
+          <td>${formatMoney(currentDue)}</td>
+          <td class="actions-cell">
+            <button type="button" class="btn-sm btn-print"    data-act="print">PRINT</button>
+            <button type="button" class="btn-sm btn-success"  data-act="pay">PAY</button>
+            <button type="button" class="btn-sm btn-primary"  data-act="edit">EDIT</button>
+            <button type="button" class="btn-sm btn-danger"   data-act="del">DEL</button>
+          </td>
+        `;
+        tr.addEventListener('click', (e) => {
+          if (e.target.closest('.actions-cell')) return;
+          openPreviewModal(c.id);
+        });
+        tr.querySelector('[data-act="print"]').addEventListener('click', (e) => { e.stopPropagation(); openPrintPreview(c.id); });
+        tr.querySelector('[data-act="pay"]').addEventListener('click',   (e) => { e.stopPropagation(); openPaymentModal(c.id); });
+        tr.querySelector('[data-act="edit"]').addEventListener('click',  (e) => { e.stopPropagation(); openEditModal(c.id); });
+        tr.querySelector('[data-act="del"]').addEventListener('click',   (e) => { e.stopPropagation(); openDeleteModal(c.id); });
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('paginationInfo').textContent =
+        total === 0 ? 'Showing 0 to 0 of 0 customers'
+        : `Showing ${start + 1} to ${end} of ${total} customers`;
+      renderPagination(totalPages);
+      updateSidebarCount();
+      updateFooterStats();
+      refreshAddressFilter();
+    }
+
+    function renderPagination(totalPages) {
+      const container = document.getElementById('paginationPages');
+      if (!container) return;
+      container.innerHTML = '';
+      const addBtn = (label, page, active = false) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        if (active) btn.classList.add('active');
+        btn.addEventListener('click', () => { currentPage = page; renderTable(); });
+        container.appendChild(btn);
+      };
+      if (totalPages <= 1) return;
+      addBtn('‹', Math.max(1, currentPage - 1));
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          addBtn(i, i, i === currentPage);
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          const span = document.createElement('span');
+          span.textContent = '…';
+          span.style.padding = '0 4px';
+          span.style.color = 'var(--muted)';
+          container.appendChild(span);
+        }
+      }
+      addBtn('›', Math.min(totalPages, currentPage + 1));
+    }
+
+    function updateSidebarCount() {
+      const el = document.getElementById('sidebarCustomerCount');
+      if (el) el.textContent = customers.length;
+      const hc = document.getElementById('tableHeaderCount');
+      if (hc) hc.textContent = `Total: ${customers.length}`;
+    }
+    function updateFooterStats() {
+      const total = customers.length;
+      const paidCustomers = customers.filter(c => { const s = getStatus(c); return s === "Paid" || s === "Partial Paid"; }).length;
+      const dueCustomers = customers.filter(c => { const s = getStatus(c); return s === "Due" || s === "Hidden Due"; }).length;
+      const ft = document.getElementById('footerTotal'); if (ft) ft.textContent = total;
+      const fp = document.getElementById('footerPaid'); if (fp) fp.textContent = paidCustomers;
+      const fd = document.getElementById('footerDue'); if (fd) fd.textContent = dueCustomers;
+    }
+
+    /* ============================================================
+       MODAL SYSTEM
+       ============================================================ */
+    function openModal(title, bodyHTML, footerHTML, wide = false) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHTML;
+      document.getElementById('modalFooter').innerHTML = footerHTML || '';
+      const box = document.getElementById('modalBox');
+      box.classList.remove('wide', 'narrow');
+      if (wide) box.classList.add('wide');
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.querySelectorAll('.password-error').forEach(el => el.classList.remove('visible'));
+      document.querySelectorAll('.modal-password-input').forEach(el => el.value = '');
+      if (txnRefreshTimer) { clearInterval(txnRefreshTimer); txnRefreshTimer = null; }
+    }
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+    window.closeModal = closeModal;
+
+    /* ============================================================
+       PREVIEW
+       ============================================================ */
+    function openPreviewModal(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) return;
+      const status = getStatus(c);
+      const currentDue = getCurrentDue(c);
+      const body = `
+        <div class="preview-grid">
+          <div class="preview-item"><div class="preview-label">Name</div><div class="preview-value">${c.name} (${c.id})</div></div>
+          <div class="preview-item"><div class="preview-label">Date Added</div><div class="preview-value">${c.dateAdded}</div></div>
+          <div class="preview-item"><div class="preview-label">Phone</div><div class="preview-value">${c.phone || '—'}</div></div>
+          <div class="preview-item"><div class="preview-label">Address</div><div class="preview-value">${c.address || '—'}</div></div>
+          <div class="preview-item"><div class="preview-label">Source</div><div class="preview-value">${c.source || '—'}</div></div>
+          <div class="preview-item"><div class="preview-label">Status</div><div class="preview-value ${statusClass(status)}">${status}</div></div>
+        </div>
+        <div class="amount-blocks">
+          <div class="amount-block"><div class="amount-label">Total Due</div><div class="amount-value">${formatMoneyOrZero(c.due || 0)}</div></div>
+          <div class="amount-block"><div class="amount-label">Total Paid</div><div class="amount-value">${formatMoneyOrZero(c.paid || 0)}</div></div>
+          <div class="amount-block"><div class="amount-label">Current Due</div><div class="amount-value">${formatMoneyOrZero(currentDue)}</div></div>
+        </div>
+        <div style="margin-top:10px;">
+          <label class="text-muted" style="font-weight:700;font-size:11px;letter-spacing:0.4px;text-transform:uppercase;">Notes</label>
+          <div class="note-area">${c.note || '—'}</div>
+          <button class="btn btn-sm btn-danger" id="clearNoteBtn">Clear Note</button>
+        </div>
+      `;
+      const footer = `
+        <button class="btn btn-success" id="pvPayBtn">Pay</button>
+        <button class="btn btn-primary" id="pvHistoryBtn">History</button>
+        <button class="btn btn-outline" id="pvEditBtn">Edit</button>
+        <button class="btn btn-danger" id="pvDelBtn">Delete</button>
+        <button class="btn btn-print" id="pvPrintBtn">Print</button>
+        <button class="btn" id="pvCloseBtn">Close</button>
+      `;
+      openModal('Customer Preview', body, footer, true);
+      document.getElementById('pvCloseBtn').addEventListener('click', closeModal);
+      document.getElementById('pvPayBtn').addEventListener('click', () => { closeModal(); setTimeout(() => openPaymentModal(id), 200); });
+      document.getElementById('pvEditBtn').addEventListener('click', () => { closeModal(); setTimeout(() => openEditModal(id), 200); });
+      document.getElementById('pvDelBtn').addEventListener('click', () => { closeModal(); setTimeout(() => openDeleteModal(id), 200); });
+      document.getElementById('pvPrintBtn').addEventListener('click', () => { closeModal(); setTimeout(() => openPrintPreview(id), 200); });
+      document.getElementById('pvHistoryBtn').addEventListener('click', () => { closeModal(); setTimeout(() => printHistory(id), 220); });
+      document.getElementById('clearNoteBtn').addEventListener('click', () => {
+        const noteArea = document.querySelector('.note-area');
+        noteArea.innerHTML = `
+          <div style="margin-bottom:10px;">Are you sure you want to clear this note?</div>
+          <button class="btn btn-sm btn-danger" id="confirmClearNote">Yes</button>
+          <button class="btn btn-sm" id="cancelClearNote">No</button>
+        `;
+        document.getElementById('confirmClearNote').addEventListener('click', () => {
+          c.note = '';
+          saveData();
+          noteArea.textContent = '—';
+          showToast('Note cleared.', 'success');
+        });
+        document.getElementById('cancelClearNote').addEventListener('click', () => {
+          noteArea.textContent = c.note || '—';
+        });
+      });
+    }
+
+    /* ============================================================
+       PAYMENT
+       ============================================================ */
+    function openPaymentModal(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) { showToast('Customer not found.', 'error'); return; }
+      const currentDue = getCurrentDue(c);
+      const body = `
+        <div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
+          <div><strong class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">Current Due</strong><div class="text-danger" style="font-size:22px;font-weight:700;">${formatMoneyOrZero(currentDue)}</div></div>
+          <div><strong class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">Total Paid</strong><div class="text-success" style="font-size:22px;font-weight:700;">${formatMoneyOrZero(c.paid || 0)}</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="paymentTypeButtons">
+          <button type="button" class="btn btn-success payment-type-btn active" data-type="receive">Receive Amount</button>
+          <button type="button" class="btn btn-warning payment-type-btn" data-type="due">Due Added</button>
+          <button type="button" class="btn payment-type-btn" data-type="adjust">Adjustment</button>
+        </div>
+        <div id="adjustOptions" style="display:none;margin-bottom:14px;">
+          <label style="margin-right:16px;"><input type="radio" name="adjustDir" value="increase" checked> Increase</label>
+          <label><input type="radio" name="adjustDir" value="decrease"> Decrease</label>
+        </div>
+        <div class="form-group" style="margin-bottom:14px;"><label>Amount</label><input type="number" id="paymentAmount" min="0" step="1" value="${currentDue}"></div>
+        <div class="form-group" style="margin-bottom:14px;"><label>Payment Note</label><textarea id="paymentNote" rows="2"></textarea></div>
+      `;
+      const footer = `<button class="btn" id="cancelPaymentBtn">Cancel</button><button class="btn btn-primary" id="savePaymentBtn">Save Payment</button>`;
+      openModal('Payment – ' + c.name, body, footer);
+      document.getElementById('cancelPaymentBtn').addEventListener('click', closeModal);
+      let paymentType = 'receive';
+      document.querySelectorAll('.payment-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.payment-type-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          paymentType = btn.dataset.type;
+          const amountInput = document.getElementById('paymentAmount');
+          if (paymentType === 'receive') amountInput.value = currentDue;
+          else amountInput.value = '';
+          document.getElementById('adjustOptions').style.display = paymentType === 'adjust' ? 'block' : 'none';
+        });
+      });
+      document.getElementById('savePaymentBtn').addEventListener('click', () => {
+        const amount = parseInt(document.getElementById('paymentAmount').value, 10);
+        const note = document.getElementById('paymentNote').value.trim();
+        if (isNaN(amount) || amount <= 0) { showToast('Please enter a valid amount.', 'error'); return; }
+        let type = '';
+        let appliedAmount = amount;
+        if (paymentType === 'receive') {
+          if (amount > currentDue) { appliedAmount = currentDue; showToast('Payment capped at current due.', 'warning'); }
+          c.paid = (c.paid || 0) + appliedAmount;
+          type = 'Payment Received';
+        } else if (paymentType === 'due') {
+          c.due = (c.due || 0) + amount;
+          type = 'Due Added';
+        } else if (paymentType === 'adjust') {
+          const dir = document.querySelector('input[name="adjustDir"]:checked').value;
+          if (dir === 'increase') c.due = (c.due || 0) + amount;
+          else { c.due = Math.max(0, (c.due || 0) - amount); if (c.due < (c.paid || 0)) c.paid = c.due; }
+          type = 'Adjustment';
+        }
+        logTxn(c, { type, amount: appliedAmount, note });
+        c.note = `[${new Date().toLocaleDateString()}] ${type}: ${appliedAmount}${note ? ' – ' + note : ''}\n` + (c.note || '');
+        saveData(); renderTable(); closeModal();
+        showToast('Payment saved.', 'success');
+      });
+    }
+
+    /* ============================================================
+       EDIT
+       ============================================================ */
+    function openEditModal(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) return;
+      const addrList = [...FIXED_ADDRESS_LIST, "Other"];
+      const srcList = ["1","2","3","4","5","6","Other"];
+      const isCustomAddress = c.address && !FIXED_ADDRESS_LIST.includes(c.address);
+      const isCustomSource = c.source && !["1","2","3","4","5","6"].includes(c.source);
+      const body = `
+        <div class="form-grid">
+          <div class="form-group"><label>Name</label><input type="text" id="editName" value="${c.name || ''}"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="editPhone" value="${c.phone || ''}"></div>
+          <div class="form-group">
+            <label>Address</label>
+            <select id="editAddress">
+              <option value="">— Select —</option>
+              ${FIXED_ADDRESS_LIST.map(a => `<option value="${a}" ${c.address === a ? 'selected' : ''}>${a}</option>`).join('')}
+              <option value="__custom__" ${isCustomAddress ? 'selected' : ''}>Other (custom)</option>
+            </select>
+          </div>
+          <div class="form-group" id="editCustomAddressGroup" style="display:${isCustomAddress ? 'flex' : 'none'};">
+            <label>Custom Address</label>
+            <input type="text" id="editCustomAddress" value="${isCustomAddress ? c.address : ''}">
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select id="editSource">
+              <option value="">— Select —</option>
+              ${["1","2","3","4","5","6"].map(s => `<option value="${s}" ${c.source === s ? 'selected' : ''}>${s}</option>`).join('')}
+              <option value="__custom__" ${isCustomSource ? 'selected' : ''}>Other (custom)</option>
+            </select>
+          </div>
+          <div class="form-group" id="editCustomSourceGroup" style="display:${isCustomSource ? 'flex' : 'none'};">
+            <label>Custom Source</label>
+            <input type="text" id="editCustomSource" value="${isCustomSource ? c.source : ''}">
+          </div>
+          <div class="form-group"><label>Total Due</label><input type="number" id="editDue" value="${c.due || 0}"></div>
+          <div class="form-group"><label>Total Paid</label><input type="number" id="editPaid" value="${c.paid || 0}"></div>
+          <div class="form-group full-width"><label>Notes</label><textarea id="editNote" rows="2">${c.note || ''}</textarea></div>
+        </div>
+      `;
+      const footer = `<button class="btn" id="cancelEditBtn">Cancel</button><button class="btn btn-primary" id="saveEditBtn">Save Changes</button>`;
+      openModal('Edit Customer – ' + c.name, body, footer);
+      document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+      document.getElementById('editAddress').addEventListener('change', (e) => {
+        document.getElementById('editCustomAddressGroup').style.display = e.target.value === '__custom__' ? 'flex' : 'none';
+      });
+      document.getElementById('editSource').addEventListener('change', (e) => {
+        document.getElementById('editCustomSourceGroup').style.display = e.target.value === '__custom__' ? 'flex' : 'none';
+      });
+      document.getElementById('saveEditBtn').addEventListener('click', () => {
+        const oldDue = c.due || 0, oldPaid = c.paid || 0;
+        const newDue = Math.max(0, parseInt(document.getElementById('editDue').value, 10) || 0);
+        const newPaid = Math.max(0, parseInt(document.getElementById('editPaid').value, 10) || 0);
+        let newAddress = document.getElementById('editAddress').value;
+        if (newAddress === '__custom__') newAddress = document.getElementById('editCustomAddress').value.trim();
+        let newSource = document.getElementById('editSource').value;
+        if (newSource === '__custom__') newSource = document.getElementById('editCustomSource').value.trim();
+        let changes = [];
+        if (newDue !== oldDue) changes.push(`Due ${newDue > oldDue ? 'increased' : 'decreased'} by ${Math.abs(newDue - oldDue)}`);
+        if (newPaid !== oldPaid) changes.push(`Paid ${newPaid > oldPaid ? 'increased' : 'decreased'} by ${Math.abs(newPaid - oldPaid)}`);
+        c.name = titleCase(document.getElementById('editName').value.trim()) || c.name;
+        c.phone = document.getElementById('editPhone').value.trim();
+        c.address = newAddress;
+        c.source = newSource;
+        c.due = newDue;
+        c.paid = newPaid;
+        c.note = document.getElementById('editNote').value;
+        if (changes.length > 0) logTxn(c, { type: 'Edit Adjustment', amount: 0, note: 'Manual Edit: ' + changes.join(', ') });
+        saveData(); refreshAddressFilter(); renderTable(); closeModal();
+        showToast('Customer updated.', 'success');
+      });
+    }
+
+    /* ============================================================
+       DELETE
+       ============================================================ */
+    function openDeleteModal(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) { showToast('Customer not found.', 'error'); return; }
+      const body = `
+        <div class="warning-box">Are you sure you want to delete <strong>${c.name}</strong>? This cannot be undone.</div>
+        <div class="form-group">
+          <label>Admin Password <span class="required">*</span></label>
+          <input type="password" class="modal-password-input" id="deletePasswordInput">
+          <div class="password-error" id="deletePasswordError">Incorrect password.</div>
+        </div>
+      `;
+      const footer = `<button class="btn" id="cancelDeleteBtn">Cancel</button><button class="btn btn-danger" id="confirmDeleteBtn">Delete Customer</button>`;
+      openModal('Delete Customer', body, footer);
+      document.getElementById('cancelDeleteBtn').addEventListener('click', closeModal);
+      document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+        const pass = document.getElementById('deletePasswordInput').value;
+        if (pass !== ADMIN_PASSWORDS.deleteCustomer) {
+          document.getElementById('deletePasswordError').classList.add('visible');
+          return;
+        }
+        if (c.transactionHistory && c.transactionHistory.length > 0) {
+          c.note = (c.note || '') + '\n\n--- Transaction History ---\n' +
+            c.transactionHistory.map(t => `${t.date} | ${t.type} | ${t.amount} | ${t.note || ''}`).join('\n');
+        }
+        customers = customers.filter(x => x.id !== id);
+        saveData(); refreshAddressFilter(); renderTable(); closeModal();
+        showToast('Customer deleted.', 'success');
+      });
+    }
+
+    /* ============================================================
+       PRINT
+       ============================================================ */
+    function openPrintPreview(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) { showToast('Customer not found.', 'error'); return; }
+      const currentDue = getCurrentDue(c);
+      const status = getStatus(c);
+      const today = new Date().toLocaleDateString();
+      const previewHTML = `
+        <div class="preview-grid">
+          <div class="preview-item"><div class="preview-label">Customer</div><div class="preview-value">${c.name}</div></div>
+          <div class="preview-item"><div class="preview-label">Record ID</div><div class="preview-value">${c.id}</div></div>
+          <div class="preview-item"><div class="preview-label">Phone</div><div class="preview-value">${c.phone || '—'}</div></div>
+          <div class="preview-item"><div class="preview-label">Address</div><div class="preview-value">${c.address || '—'}</div></div>
+          <div class="preview-item"><div class="preview-label">Date</div><div class="preview-value">${today}</div></div>
+          <div class="preview-item"><div class="preview-label">Status</div><div class="preview-value ${statusClass(status)}">${status}</div></div>
+        </div>
+        <div class="amount-blocks">
+          <div class="amount-block"><div class="amount-label">Total Due</div><div class="amount-value">${formatMoneyOrZero(c.due || 0)}</div></div>
+          <div class="amount-block"><div class="amount-label">Total Paid</div><div class="amount-value">${formatMoneyOrZero(c.paid || 0)}</div></div>
+          <div class="amount-block"><div class="amount-label">Current Due</div><div class="amount-value">${formatMoneyOrZero(currentDue)}</div></div>
+        </div>
+        <div class="info-box"><strong>Choose a print format:</strong> receipt will be generated and the print dialog will appear.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button type="button" class="btn btn-outline" id="printCustomerBtn">📄 Customer Copy</button>
+          <button type="button" class="btn btn-outline" id="printStoreBtn">🏪 Store Copy</button>
+          <button type="button" class="btn btn-primary" id="printBothBtn">📑 Both Copies (Cut in Half)</button>
+          <button type="button" class="btn" id="printHistoryBtn"><i class="fas fa-history"></i> Payment History</button>
+        </div>
+      `;
+      openModal('Print Preview – ' + c.name, previewHTML, '<button class="btn" id="cancelPrintBtn">Close</button>', true);
+      document.getElementById('cancelPrintBtn').addEventListener('click', closeModal);
+      document.getElementById('printCustomerBtn').addEventListener('click', () => { closeModal(); setTimeout(() => printReceipt(id, 'customer'), 220); });
+      document.getElementById('printStoreBtn').addEventListener('click',    () => { closeModal(); setTimeout(() => printReceipt(id, 'store'), 220); });
+      document.getElementById('printBothBtn').addEventListener('click',     () => { closeModal(); setTimeout(() => printReceipt(id, 'both'), 220); });
+      document.getElementById('printHistoryBtn').addEventListener('click',  () => { closeModal(); setTimeout(() => printHistory(id), 220); });
+    }
+
+    function printReceipt(id, copyType) {
+      const c = customers.find(x => x.id === id);
+      if (!c) return;
+      const currentDue = getCurrentDue(c);
+      const status = getStatus(c);
+      const receiptHTML = `
+        <div style="border:2px double #000;padding:20px;max-width:700px;margin:0 auto;font-family:'Times New Roman',Georgia,serif;color:#000;">
+          <div style="text-align:right;font-size:11px;">FORM NO. RGCE/01</div>
+          <h2 style="text-align:center;border-bottom:1px solid #000;padding-bottom:6px;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+          <p style="text-align:center;font-size:12px;">Gifts • Electrical • Cosmetics - Under One Roof</p>
+          <p style="text-align:center;font-size:11px;">Moshjid Market, Naohata Mor, Mohadevpur, Naogaon | +8801715986646</p>
+          <hr style="border-top:1px solid #000;">
+          <h3 style="text-align:center;">${copyType === 'customer' ? 'CUSTOMER COPY' : 'STORE COPY – ACCOUNTING RECORD'}</h3>
+          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Customer Name</td><td style="border:1px solid #000;padding:4px;">${c.name}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Phone</td><td style="border:1px solid #000;padding:4px;">${c.phone || '—'}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Address</td><td style="border:1px solid #000;padding:4px;">${c.address || '—'}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Date</td><td style="border:1px solid #000;padding:4px;">${new Date().toLocaleDateString()}</td></tr>
+          </table>
+          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Total Due</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(c.due || 0)}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Total Paid</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(c.paid || 0)}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Current Due</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(currentDue)}</td></tr>
+            <tr><td style="border:1px solid #000;padding:4px;font-weight:700;">Status</td><td style="border:1px solid #000;padding:4px;">${status}</td></tr>
+          </table>
+          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated document. No signature required.</p>
+        </div>
+      `;
+      const finalHTML = copyType === 'both'
+        ? receiptHTML + '<div style="text-align:center;margin:20px 0;font-size:14px;">✂ CUT HERE ✂</div>' + receiptHTML
+        : receiptHTML;
+      triggerPrint(finalHTML);
+    }
+
+    function printHistory(id) {
+      const c = customers.find(x => x.id === id);
+      if (!c) return;
+      const html = `
+        <div style="border:2px double #000;padding:20px;max-width:700px;margin:0 auto;font-family:'Times New Roman',Georgia,serif;color:#000;">
+          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+          <h3 style="text-align:center;">PAYMENT HISTORY – ${c.name}</h3>
+          <p><strong>ID:</strong> ${c.id} | <strong>Date Added:</strong> ${c.dateAdded}</p>
+          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;">
+            <thead><tr>
+              <th style="border:1px solid #000;padding:4px;">SL</th>
+              <th style="border:1px solid #000;padding:4px;">Date &amp; Time</th>
+              <th style="border:1px solid #000;padding:4px;">Type</th>
+              <th style="border:1px solid #000;padding:4px;">Amount</th>
+              <th style="border:1px solid #000;padding:4px;">Notes</th>
+            </tr></thead>
+            <tbody>
+              ${(c.transactionHistory || []).map((t, i) => `
+                <tr>
+                  <td style="border:1px solid #000;padding:4px;">${i+1}</td>
+                  <td style="border:1px solid #000;padding:4px;">${t.date}</td>
+                  <td style="border:1px solid #000;padding:4px;">${t.type}</td>
+                  <td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(t.amount)}</td>
+                  <td style="border:1px solid #000;padding:4px;">${t.note || ''}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5" style="text-align:center;border:1px solid #000;padding:8px;">No transaction history</td></tr>'}
+            </tbody>
+          </table>
+          <p style="text-align:center;font-size:11px;">Computer-generated. No signature required.</p>
+        </div>
+      `;
+      triggerPrint(html);
+    }
+
+    function printFilteredReport() {
+      applyFilters();
+      const html = `
+        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',Georgia,serif;color:#000;">
+          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+          <h3 style="text-align:center;">FILTERED CUSTOMER REPORT</h3>
+          <p>Active filters: ${document.getElementById('globalSearch').value ? 'Search: ' + document.getElementById('globalSearch').value + ' | ' : ''}${document.getElementById('filterAddress').value || 'All addresses'} | ${document.getElementById('filterStatus').value || 'All statuses'} | ${document.getElementById('filterSource').value || 'All sources'}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr>
+              <th style="border:1px solid #000;padding:3px;">SL</th>
+              <th style="border:1px solid #000;padding:3px;">Name</th>
+              <th style="border:1px solid #000;padding:3px;">Address</th>
+              <th style="border:1px solid #000;padding:3px;">Source</th>
+              <th style="border:1px solid #000;padding:3px;">Total Due</th>
+              <th style="border:1px solid #000;padding:3px;">Total Paid</th>
+              <th style="border:1px solid #000;padding:3px;">Current Due</th>
+              <th style="border:1px solid #000;padding:3px;">Status</th>
+            </tr></thead>
+            <tbody>
+              ${filteredCustomers.map((c, i) => `
+                <tr>
+                  <td style="border:1px solid #000;padding:3px;">${i+1}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.name}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.address || ''}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.source || ''}</td>
+                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.due || 0)}</td>
+                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.paid || 0)}</td>
+                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(getCurrentDue(c))}</td>
+                  <td style="border:1px solid #000;padding:3px;">${getStatus(c)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
+        </div>
+      `;
+      triggerPrint(html);
+    }
+
+    function printManualReport() {
+      applyFilters();
+      const html = `
+        <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',Georgia,serif;color:#000;">
+          <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+          <h3 style="text-align:center;">MANUAL COLLECTION SHEET</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr>
+              <th style="border:1px solid #000;padding:3px;">SL</th>
+              <th style="border:1px solid #000;padding:3px;">Name</th>
+              <th style="border:1px solid #000;padding:3px;">Address</th>
+              <th style="border:1px solid #000;padding:3px;">Source</th>
+              <th style="border:1px solid #000;padding:3px;">Total Due</th>
+              <th style="border:1px solid #000;padding:3px;">Paid Amount</th>
+              <th style="border:1px solid #000;padding:3px;">Current Due</th>
+            </tr></thead>
+            <tbody>
+              ${filteredCustomers.map((c, i) => `
+                <tr>
+                  <td style="border:1px solid #000;padding:3px;">${i+1}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.name}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.address || ''}</td>
+                  <td style="border:1px solid #000;padding:3px;">${c.source || ''}</td>
+                  <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(c.due || 0)}</td>
+                  <td style="border:1px solid #000;padding:3px;height:24px;"></td>
+                  <td style="border:1px solid #000;padding:3px;height:24px;"></td>
+                </tr>
+              `).join('')}
+              <tr style="font-weight:700;">
+                <td colspan="4" style="border:1px solid #000;padding:3px;text-align:right;">TOTALS</td>
+                <td style="border:1px solid #000;padding:3px;">${formatMoneyOrZero(filteredCustomers.reduce((s, c) => s + (c.due || 0), 0))}</td>
+                <td style="border:1px solid #000;padding:3px;"></td>
+                <td style="border:1px solid #000;padding:3px;"></td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
+        </div>
+      `;
+      triggerPrint(html);
+    }
+
+    /* ============ SAVE REFERENCES FOR PART 4 ============ */
+    window.__app = {
+      showToast, triggerPrint, saveData, renderTable, refreshAddressFilter,
+      openModal, closeModal, openPreviewModal, openPaymentModal, openEditModal,
+      openDeleteModal, openPrintPreview, printReceipt, printHistory,
+      printFilteredReport, printManualReport, openTransactionTracking,
+      renderTxnStats, renderTxnTable, printTransactionStatement,
+      syncToGoogleSheets, pullFromGoogleSheets, sendTelegramBackup,
+      updateTelegramStatus, openBackupRestoreModal, openTelegramSetup,
+      openClearBySourceModal, openAdminPanel, promptPassword,
+      getCurrentUser: () => currentUser,
+      cloudPush, getCustomers: () => customers,
+      setCustomers: (arr) => { customers = arr; },
+      logTxn, buildTxnRecord, txnApiConfigured, fetchTxnFromSheet
+    };
+
+    /* ============================================================
+       SUMMARY REPORT
+       ============================================================ */
+    function openSummaryReport() {
+      const totalCustomers = customers.length;
+      const totalDue = customers.reduce((s, c) => s + (c.due || 0), 0);
+      const totalPaid = customers.reduce((s, c) => s + (c.paid || 0), 0);
+      const netOutstanding = customers.reduce((s, c) => s + getCurrentDue(c), 0);
+      const withDue = customers.filter(c => { const s = getStatus(c); return s === 'Due' || s === 'Partial Paid'; }).length;
+      const paidCustomers = customers.filter(c => getStatus(c) === 'Paid').length;
+      const partialPaid = customers.filter(c => getStatus(c) === 'Partial Paid').length;
+      const avgDue = totalCustomers > 0 ? netOutstanding / totalCustomers : 0;
+      const body = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+          <div class="preview-item"><div class="preview-label">Total Customers</div><div class="preview-value">${totalCustomers}</div></div>
+          <div class="preview-item"><div class="preview-label">Total Due</div><div class="preview-value">${formatMoneyOrZero(totalDue)}</div></div>
+          <div class="preview-item"><div class="preview-label">Total Paid</div><div class="preview-value">${formatMoneyOrZero(totalPaid)}</div></div>
+          <div class="preview-item"><div class="preview-label">Net Outstanding</div><div class="preview-value">${formatMoneyOrZero(netOutstanding)}</div></div>
+          <div class="preview-item"><div class="preview-label">With Due</div><div class="preview-value">${withDue}</div></div>
+          <div class="preview-item"><div class="preview-label">Paid</div><div class="preview-value">${paidCustomers}</div></div>
+          <div class="preview-item"><div class="preview-label">Partial Paid</div><div class="preview-value">${partialPaid}</div></div>
+          <div class="preview-item"><div class="preview-label">Avg Due</div><div class="preview-value">${formatMoneyOrZero(avgDue)}</div></div>
+        </div>
+        <table class="official-table" style="width:100%;">
+          <thead><tr><th>Description</th><th>Count</th><th>Amount</th><th>Percentage</th></tr></thead>
+          <tbody>
+            <tr><td class="left-align">Total Customers</td><td>${totalCustomers}</td><td>—</td><td>100%</td></tr>
+            <tr><td class="left-align">Full Due</td><td>${withDue}</td><td>${formatMoneyOrZero(totalDue)}</td><td>${totalCustomers ? Math.round(withDue/totalCustomers*100) : 0}%</td></tr>
+            <tr><td class="left-align">Partial Paid</td><td>${partialPaid}</td><td>—</td><td>${totalCustomers ? Math.round(partialPaid/totalCustomers*100) : 0}%</td></tr>
+            <tr><td class="left-align">Fully Paid</td><td>${paidCustomers}</td><td>—</td><td>${totalCustomers ? Math.round(paidCustomers/totalCustomers*100) : 0}%</td></tr>
+            <tr><td class="left-align">Total Starting Due</td><td>—</td><td>${formatMoneyOrZero(totalDue)}</td><td>—</td></tr>
+            <tr><td class="left-align">Total Paid</td><td>—</td><td>${formatMoneyOrZero(totalPaid)}</td><td>${totalDue ? Math.round(totalPaid/totalDue*100) : 0}% of due</td></tr>
+            <tr><td class="left-align">Net Outstanding</td><td>—</td><td>${formatMoneyOrZero(netOutstanding)}</td><td>${totalDue ? Math.round(netOutstanding/totalDue*100) : 0}%</td></tr>
+          </tbody>
+        </table>
+      `;
+      const footer = `<button class="btn btn-primary" id="printSummaryBtn">Print Summary</button><button class="btn" id="closeSummaryBtn">Close</button>`;
+      openModal('Summary Report', body, footer, true);
+      document.getElementById('closeSummaryBtn').addEventListener('click', closeModal);
+      document.getElementById('printSummaryBtn').addEventListener('click', () => {
+        const html = `
+          <div style="border:2px double #000;padding:20px;font-family:'Times New Roman',serif;color:#000;">
+            <h2 style="text-align:center;">ROZA GIFT CORNER &amp; ELECTRIC</h2>
+            <h3 style="text-align:center;">SUMMARY REPORT</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr>
+                <th style="border:1px solid #000;padding:4px;">Description</th>
+                <th style="border:1px solid #000;padding:4px;">Count</th>
+                <th style="border:1px solid #000;padding:4px;">Amount</th>
+                <th style="border:1px solid #000;padding:4px;">Percentage</th>
+              </tr></thead>
+              <tbody>
+                <tr><td style="border:1px solid #000;padding:4px;">Total Customers</td><td style="border:1px solid #000;padding:4px;">${totalCustomers}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">100%</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Full Due</td><td style="border:1px solid #000;padding:4px;">${withDue}</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalDue)}</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(withDue/totalCustomers*100) : 0}%</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Partial Paid</td><td style="border:1px solid #000;padding:4px;">${partialPaid}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(partialPaid/totalCustomers*100) : 0}%</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Fully Paid</td><td style="border:1px solid #000;padding:4px;">${paidCustomers}</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${totalCustomers ? Math.round(paidCustomers/totalCustomers*100) : 0}%</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Total Starting Due</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalDue)}</td><td style="border:1px solid #000;padding:4px;">—</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Total Paid</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(totalPaid)}</td><td style="border:1px solid #000;padding:4px;">${totalDue ? Math.round(totalPaid/totalDue*100) : 0}% of due</td></tr>
+                <tr><td style="border:1px solid #000;padding:4px;">Net Outstanding</td><td style="border:1px solid #000;padding:4px;">—</td><td style="border:1px solid #000;padding:4px;">${formatMoneyOrZero(netOutstanding)}</td><td style="border:1px solid #000;padding:4px;">${totalDue ? Math.round(netOutstanding/totalDue*100) : 0}%</td></tr>
+              </tbody>
+            </table>
+            <p style="text-align:center;font-size:11px;margin-top:16px;">Computer-generated. No signature required.</p>
+          </div>
+        `;
+        closeModal();
+        triggerPrint(html);
+      });
+    }
+
+    /* ============================================================
+       LIVE STATS
+       ============================================================ */
+    function openLiveStats() {
+      applyFilters();
+      const total = filteredCustomers.length;
+      const totalPaid = filteredCustomers.reduce((s, c) => s + (c.paid || 0), 0);
+      const paidCount = filteredCustomers.filter(c => getStatus(c) === 'Paid').length;
+      const totalStartingDue = filteredCustomers.reduce((s, c) => s + (c.due || 0), 0);
+      const netOutstanding = filteredCustomers.reduce((s, c) => s + getCurrentDue(c), 0);
+      const dueCount = filteredCustomers.filter(c => getStatus(c) === 'Due').length;
+      const partialCount = filteredCustomers.filter(c => getStatus(c) === 'Partial Paid').length;
+      const body = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div class="preview-item"><div class="preview-label">Total Customers</div><div class="preview-value">${total}</div></div>
+          <div class="preview-item"><div class="preview-label">Total Paid</div><div class="preview-value">${formatMoneyOrZero(totalPaid)}</div></div>
+          <div class="preview-item"><div class="preview-label">Fully Paid</div><div class="preview-value">${paidCount}</div></div>
+          <div class="preview-item"><div class="preview-label">Starting Due</div><div class="preview-value">${formatMoneyOrZero(totalStartingDue)}</div></div>
+          <div class="preview-item"><div class="preview-label">Net Outstanding</div><div class="preview-value">${formatMoneyOrZero(netOutstanding)}</div></div>
+          <div class="preview-item"><div class="preview-label">Full Due</div><div class="preview-value">${dueCount}</div></div>
+          <div class="preview-item"><div class="preview-label">Partial Paid</div><div class="preview-value">${partialCount}</div></div>
+        </div>
+        <div class="info-box">Filters: ${document.getElementById('globalSearch').value ? 'Search "' + document.getElementById('globalSearch').value + '" | ' : ''}${document.getElementById('filterAddress').value || 'All addresses'} | ${document.getElementById('filterStatus').value || 'All statuses'} | ${document.getElementById('filterSource').value || 'All sources'}</div>
+      `;
+      openModal('Live Stats', body, '<button class="btn" id="closeLiveStatsBtn">Close</button>', true);
+      document.getElementById('closeLiveStatsBtn').addEventListener('click', closeModal);
+    }
+
+    /* ============================================================
+       PASSWORD PROMPT
+       ============================================================ */
+    function promptPassword(title, correctPassword, callback) {
+      const body = `
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" class="modal-password-input" id="promptPasswordInput">
+          <div class="password-error" id="promptPasswordError">Incorrect password.</div>
+        </div>
+      `;
+      const footer = `<button class="btn" id="cancelPwdBtn">Cancel</button><button class="btn btn-primary" id="promptPasswordSubmit">Submit</button>`;
+      openModal(title, body, footer);
+      document.getElementById('cancelPwdBtn').addEventListener('click', closeModal);
+      document.getElementById('promptPasswordSubmit').addEventListener('click', () => {
+        const val = document.getElementById('promptPasswordInput').value;
+        if (val === correctPassword) { closeModal(); callback(); }
+        else { document.getElementById('promptPasswordError').classList.add('visible'); }
+      });
+      document.getElementById('promptPasswordInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('promptPasswordSubmit').click();
+      });
+    }
+
+    /* ============================================================
+       BACKUP / RESTORE MODAL
+       ============================================================ */
+    function openBackupRestoreModal() {
+      const body = `
+        <div style="margin-bottom:18px;">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">Download Backup</h3>
+          <button class="btn btn-primary" id="downloadBackupBtn"><i class="fas fa-download"></i> Download JSON Backup</button>
+          <button class="btn btn-outline" id="openDriveBackupBtn" style="margin-left:8px;"><i class="fab fa-google-drive"></i> Open Drive Backup</button>
+        </div>
+        <div>
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">Restore from Backup</h3>
+          <input type="file" id="restoreFileInput" accept=".json" style="padding:8px;border:1px solid var(--border-strong);border-radius:4px;background:var(--input-bg);color:var(--text);width:100%;">
+          <div id="restorePreview" style="margin-top:10px;font-size:13px;"></div>
+        </div>
+      `;
+      openModal('Backup / Restore', body, '<button class="btn" id="closeBackupBtn">Close</button>');
+      document.getElementById('closeBackupBtn').addEventListener('click', closeModal);
+      document.getElementById('downloadBackupBtn').addEventListener('click', () => {
+        const data = JSON.stringify(customers, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `RGCE_SparkDesk_Backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        lastBackupDownload = Date.now();
+        localStorage.setItem(LAST_LOCAL_DOWNLOAD_KEY, lastBackupDownload);
+        showToast('Backup downloaded.', 'success');
+      });
+      document.getElementById('openDriveBackupBtn').addEventListener('click', () => {
+        promptPassword('Enter password for Google Drive Backup', BACKUP_PASSWORD, () => {
+          window.open(GOOGLE_DRIVE_URL, '_blank');
+          showToast('Google Drive backup opened.', 'success');
+        });
+      });
+      document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!Array.isArray(parsed) || !parsed.every(c => c.name && c.id)) throw new Error('Invalid format');
+            document.getElementById('restorePreview').innerHTML = `
+              <div class="info-box">Found ${parsed.length} customers. <button class="btn btn-sm btn-primary" id="confirmRestoreBtn" style="margin-left:8px;">Confirm Restore</button></div>
+            `;
+            document.getElementById('confirmRestoreBtn').addEventListener('click', () => {
+              customers = parsed;
+              saveData();
+              refreshAddressFilter();
+              renderTable();
+              closeModal();
+              showToast('Data restored & syncing to cloud.', 'success');
+            });
+          } catch (err) {
+            document.getElementById('restorePreview').innerHTML = `<div class="warning-box">Invalid backup file.</div>`;
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    /* ============================================================
+       CLEAR AMOUNTS BY SOURCE
+       ============================================================ */
+    function openClearBySourceModal() {
+      const sources = [...new Set(customers.map(c => c.source).filter(Boolean))];
+      const body = `
+        <div style="margin-bottom:10px;">
+          <label><input type="checkbox" id="selectAllSources"> Select All</label>
+        </div>
+        <div id="sourceCheckboxes">
+          ${sources.map(s => `<label style="display:block;padding:6px 0;"><input type="checkbox" class="source-checkbox" value="${s}"> Source ${s}</label>`).join('')}
+        </div>
+        <div id="clearPreview" class="info-box" style="margin-top:14px;"></div>
+      `;
+      const footer = `<button class="btn" id="cancelClearSrcBtn">Cancel</button><button class="btn btn-danger" id="confirmClearSourceBtn">Clear Selected</button>`;
+      openModal('Clear Amounts by Source', body, footer);
+      document.getElementById('cancelClearSrcBtn').addEventListener('click', closeModal);
+      function updatePreview() {
+        const checked = [...document.querySelectorAll('.source-checkbox:checked')].map(cb => cb.value);
+        const affected = customers.filter(c => checked.includes(c.source));
+        const totalDue = affected.reduce((s, c) => s + (c.due || 0), 0);
+        const totalPaid = affected.reduce((s, c) => s + (c.paid || 0), 0);
+        document.getElementById('clearPreview').textContent = `${affected.length} customers affected – Due: ${formatMoneyOrZero(totalDue)}, Paid: ${formatMoneyOrZero(totalPaid)}`;
+      }
+      document.querySelectorAll('.source-checkbox').forEach(cb => cb.addEventListener('change', updatePreview));
+      document.getElementById('selectAllSources').addEventListener('change', (e) => {
+        document.querySelectorAll('.source-checkbox').forEach(cb => cb.checked = e.target.checked);
+        updatePreview();
+      });
+      document.getElementById('confirmClearSourceBtn').addEventListener('click', () => {
+        const checked = [...document.querySelectorAll('.source-checkbox:checked')].map(cb => cb.value);
+        customers.forEach(c => { if (checked.includes(c.source)) { c.due = 0; c.paid = 0; c.transactionHistory = []; } });
+        saveData(); renderTable(); closeModal();
+        showToast('Amounts cleared for selected sources.', 'success');
+      });
+    }
+
+    /* ============================================================
+       TELEGRAM SETUP
+       ============================================================ */
+    function openTelegramSetup() {
+      const body = `
+        <p style="margin-bottom:8px;">1. Create a bot with @BotFather on Telegram and get the token.</p>
+        <p style="margin-bottom:14px;">2. Paste token below and click "Auto-detect Chat ID".</p>
+        <div class="form-group" style="margin-bottom:12px;"><label>Bot Token</label><input type="text" id="telegramTokenInput" value="${telegramToken}"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>Chat ID</label><input type="text" id="telegramChatInput" value="${telegramChatId}"></div>
+        <button class="btn btn-primary" id="autoDetectChatBtn">Auto-detect Chat ID</button>
+        <div id="telegramSetupMsg" style="margin-top:10px;"></div>
+      `;
+      const footer = `<button class="btn" id="cancelTgBtn">Cancel</button><button class="btn btn-primary" id="saveTelegramBtn">Save &amp; Reload</button>`;
+      openModal('Telegram Backup Setup', body, footer);
+      document.getElementById('cancelTgBtn').addEventListener('click', closeModal);
+      document.getElementById('autoDetectChatBtn').addEventListener('click', async () => {
+        const token = document.getElementById('telegramTokenInput').value.trim();
+        if (!token) { showToast('Enter bot token first.', 'error'); return; }
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
+          const data = await res.json();
+          if (data.result && data.result.length > 0) {
+            const chatId = data.result[0].message.chat.id;
+            document.getElementById('telegramChatInput').value = chatId;
+            document.getElementById('telegramSetupMsg').innerHTML = `<div class="info-box">Chat ID detected: ${chatId}</div>`;
+          } else {
+            document.getElementById('telegramSetupMsg').innerHTML = `<div class="warning-box">No updates found. Send a message to your bot first.</div>`;
+          }
+        } catch (e) {
+          document.getElementById('telegramSetupMsg').innerHTML = `<div class="warning-box">Error: ${e.message}</div>`;
+        }
+      });
+      document.getElementById('saveTelegramBtn').addEventListener('click', () => {
+        localStorage.setItem(TELEGRAM_TOKEN_KEY, document.getElementById('telegramTokenInput').value.trim());
+        localStorage.setItem(TELEGRAM_CHAT_KEY, document.getElementById('telegramChatInput').value.trim());
+        telegramToken = localStorage.getItem(TELEGRAM_TOKEN_KEY);
+        telegramChatId = localStorage.getItem(TELEGRAM_CHAT_KEY);
+        closeModal();
+        updateTelegramStatus();
+        showToast('Telegram settings saved.', 'success');
+      });
+    }
+
+    /* ============================================================
+       GOOGLE SHEETS PANEL
+       ============================================================ */
+    function openGoogleSheetsPanel() {
+      const lastPull = localStorage.getItem(LAST_PULL_KEY);
+      const lastPullText = lastPull ? new Date(lastPull).toLocaleString() : 'Never';
+      const body = `
+        <div style="margin-bottom:14px;">
+          <iframe src="${SHEET_PREVIEW_URL}" style="width:100%;height:300px;border:1px solid var(--border);border-radius:4px;" title="Google Sheets Preview"></iframe>
+        </div>
+        <div class="info-box">
+          <strong>Auto-sync (app → sheet):</strong> Last sync: <span id="lastSyncText">${lastSyncTime ? lastSyncTime.toLocaleString() : 'Never'}</span>
+        </div>
+        <div class="info-box-warning">
+          <strong>Manual pull (sheet → app):</strong> Last pull: <span id="lastPullText">${lastPullText}</span>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="syncNowBtn"><i class="fas fa-sync-alt"></i> Sync Now (Push)</button>
+          <button class="btn btn-warning" id="pullFromSheetBtn"><i class="fas fa-download"></i> Pull from Sheet</button>
+          <button class="btn btn-outline" id="openSheetBtn"><i class="fas fa-external-link-alt"></i> Open Sheet</button>
+          <button class="btn btn-outline" id="fullscreenSheetBtn"><i class="fas fa-expand"></i> Fullscreen</button>
+        </div>
+        <div class="text-muted" style="margin-top:14px;font-size:12px;">
+          ⚠️ Pulling will replace all local data with data from the sheet. Make a backup first.
+        </div>
+      `;
+      openModal('Google Sheets Sync', body, '<button class="btn" id="closeSheetPanelBtn">Close</button>', true);
+      document.getElementById('closeSheetPanelBtn').addEventListener('click', closeModal);
+      document.getElementById('syncNowBtn').addEventListener('click', () => { syncToGoogleSheets(false); });
+      document.getElementById('pullFromSheetBtn').addEventListener('click', () => { pullFromGoogleSheets(false); });
+      document.getElementById('openSheetBtn').addEventListener('click', () => { window.open(SHEET_EDIT_URL, '_blank'); });
+      document.getElementById('fullscreenSheetBtn').addEventListener('click', () => { window.open(SHEET_EDIT_URL, '_blank', 'width=1200,height=800'); });
+    }
+
+    /* ============================================================
+       ADMIN PANEL
+       ============================================================ */
+    function openAdminPanel() {
+      const user = currentUser;
+      const body = `
+        <div class="info-box" style="margin-bottom:14px;">
+          <strong>Logged in as:</strong> ${user ? user.email : 'Unknown'}<br>
+          <strong>UID:</strong> <code style="font-size:11px;">${user ? user.uid : '—'}</code><br>
+          <strong>Cloud sync:</strong> <span style="color:var(--success);font-weight:700;">Active</span>
+        </div>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
+        <table class="official-table" style="width:100%;">
+          <thead><tr><th>Action</th><th>Password</th></tr></thead>
+          <tbody>
+            <tr><td class="left-align">Clear Notes</td><td>3508</td></tr>
+            <tr><td class="left-align">Clear Amounts</td><td>3508</td></tr>
+            <tr><td class="left-align">Summary Report</td><td>3508</td></tr>
+            <tr><td class="left-align">Live Stats</td><td>3508</td></tr>
+            <tr><td class="left-align">Delete Customer</td><td>3508</td></tr>
+            <tr><td class="left-align">Google Drive Backup</td><td>3508</td></tr>
+            <tr><td class="left-align">Clear ALL Data</td><td>1812693380</td></tr>
+            <tr><td class="left-align">Master Admin</td><td>fmkk</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:12px;font-size:12px;color:var(--muted);">To add/remove users: Firebase Console → Authentication → Users.</p>
+      `;
+      openModal('Admin Panel', body, '<button class="btn" id="closeAdminBtn">Close</button>');
+      document.getElementById('closeAdminBtn').addEventListener('click', closeModal);
+    }
+
+    /* ============================================================
+       SIDEBAR ACTIONS
+       ============================================================ */
+    function handleSidebarAction(action) {
+      switch (action) {
+        case 'dashboard': renderTable(); break;
+        case 'transactionTracking': openTransactionTracking(); break;
+        case 'advancedFilter': document.getElementById('advancedFilterRow').classList.toggle('visible'); break;
+        case 'liveStats': promptPassword('Enter password for Live Stats', ADMIN_PASSWORDS.summaryAccess, openLiveStats); break;
+        case 'summaryReport': promptPassword('Enter password for Summary Report', ADMIN_PASSWORDS.summaryAccess, openSummaryReport); break;
+        case 'printReport': printFilteredReport(); break;
+        case 'backupRestore': openBackupRestoreModal(); break;
+        case 'telegramBackup': openTelegramSetup(); break;
+        case 'googleSheets': openGoogleSheetsPanel(); break;
+        case 'clearNotes':
+          promptPassword('Enter password to clear all notes', ADMIN_PASSWORDS.clearNotes, () => {
+            customers.forEach(c => c.note = '');
+            saveData(); renderTable(); showToast('All notes cleared.', 'success');
+          });
+          break;
+        case 'clearAmountsSource':
+          promptPassword('Enter password', ADMIN_PASSWORDS.clearAmounts, openClearBySourceModal);
+          break;
+        case 'clearAllAmounts':
+          promptPassword('Enter password to clear all amounts', ADMIN_PASSWORDS.clearAmounts, () => {
+            customers.forEach(c => { c.due = 0; c.paid = 0; c.transactionHistory = []; });
+            saveData(); renderTable(); showToast('All amounts cleared.', 'success');
+          });
+          break;
+        case 'clearAllData':
+          promptPassword('Enter master password to clear ALL data', ADMIN_PASSWORDS.clearData, () => {
+            localStorage.removeItem(STORAGE_KEY);
+            customers = [];
+            saveData(); refreshAddressFilter(); renderTable();
+            showToast('All data cleared.', 'success');
+          });
+          break;
+        case 'shopDetails':
+          openModal('Shop Details', `
+            <p><strong>Proprietor:</strong> Md. Ziaur Rahman</p>
+            <p><strong>Address:</strong> Moshjid Market, Naohata Mor, Mohadevpur, Naogaon</p>
+            <p><strong>Contact:</strong> +8801715986646</p>
+            <p><strong>Hours:</strong> 8:00 AM – 10:00 PM</p>
+            <p><strong>Business:</strong> Gifts / Electrical / Cosmetics</p>
+          `, '<button class="btn" onclick="closeModal()">Close</button>');
+          break;
+        case 'developerInfo':
+          openModal('Developer Info', `
+            <p><strong>Farhan Tanzid Shiyam</strong></p>
+            <p>Software Developer &amp; App Owner</p>
+            <p>Email: farhantanzidshiyam@gmail.com</p>
+            <p>WhatsApp: +880131932189</p>
+            <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
+            <p>RGCE SparkDesk v1.5 Cloud</p>
+          `, '<button class="btn" onclick="closeModal()">Close</button>');
+          break;
+        case 'help':
+          openModal('Help', '<p>Use the sidebar to navigate. Search, filter, add, edit, and manage customer dues. All data is stored locally and synced to your private cloud.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
+          break;
+        default: showToast('Feature coming soon.', 'info');
+      }
+    }
+
+    /* ============================================================
+       ADD FORM HELPERS
+       ============================================================ */
+    function showAddForm() {
+      const panel = document.getElementById('addCustomerPanel');
+      if (!panel) return;
+      panel.classList.add('visible');
+      formVisible = true;
+      localStorage.setItem('roza_form_state', 'open');
+      const nameInput = document.getElementById('custName');
+      if (nameInput) nameInput.focus();
+    }
+    function hideAddForm() {
+      const panel = document.getElementById('addCustomerPanel');
+      if (!panel) return;
+      panel.classList.remove('visible');
+      formVisible = false;
+      localStorage.setItem('roza_form_state', 'closed');
+    }
+    function resetForm() {
+      ['custName','custPhone','custCustomAddress','custDue','custPaid','custCustomSource','custNote'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const addr = document.getElementById('custAddress');
+      const src = document.getElementById('custSource');
+      if (addr) addr.value = '';
+      if (src) src.value = '';
+      const cag = document.getElementById('customAddressGroup');
+      const csg = document.getElementById('customSourceGroup');
+      if (cag) cag.style.display = 'none';
+      if (csg) csg.style.display = 'none';
+    }
+
+    /* ============================================================
+       EXPOSE HELPERS FOR PART 5
+       ============================================================ */
+    window.__app2 = {
+      setupAuth, handleSidebarAction, showAddForm, hideAddForm, resetForm,
+      openSummaryReport, openLiveStats, promptPassword, openAdminPanel,
+      openGoogleSheetsPanel
+    };
+
+<!DOCTYPE html>
+<html>
+<head>
+  ... Part 1 CSS ...
+</head>
+<body>
+  ... Part 2 HTML ...
+  <script type="module"> ... Firebase SDK ... </script>
+  <script>
+    (function() {
+      ... Part 3 ...
+      ... Part 4 ...
+      ... Part 5 ...
+    })();
+  </script>
+</body>
+</html>
