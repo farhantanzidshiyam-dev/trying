@@ -186,7 +186,7 @@
     .record-block .record-label { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.4px; }
     .record-block .record-date { font-weight: 700; font-size: 14px; color: var(--text); margin-top: 2px; }
 
-    /* ============ SEARCH BAR (DRAGGABLE) ============ */
+    /* ============ SEARCH BAR ============ */
     .search-wrapper { position: relative; margin: 16px 20px 0; z-index: 500; }
     .search-wrapper.floating {
       position: fixed; margin: 0; top: 100px; left: 20px; width: 400px;
@@ -675,7 +675,7 @@
       <button class="auth-btn secondary" id="authResetBtn">Forgot Password?</button>
       <div id="authMsg"></div>
       <div class="auth-footer">
-        🔒 Cloud-first storage with offline cache.<br>
+        🔒 Cloud-synced storage. Internet required for login.<br>
         Your login session is remembered until you logout.
       </div>
     </div>
@@ -732,7 +732,7 @@
   </div>
 
   <!-- ============================================
-       SEARCH BAR (draggable / lockable)
+       SEARCH BAR
        ============================================ -->
   <div class="search-wrapper inline" id="searchWrapper">
     <div class="search-drag-handle" id="searchDragHandle" title="Drag to move search bar">
@@ -985,7 +985,7 @@
     <div class="footer-badges">
       <span class="badge">DMCA</span>
       <span class="badge">SSL</span>
-      <span class="badge">Cloud + Offline</span>
+      <span class="badge">Cloud Sync</span>
       <span class="badge"><a href="https://farhantanzidshiyam-dev.github.io/rozagiftcorner-backup/" target="_blank">Android App</a></span>
       <span class="badge" id="liveTimeBadge">--:--:--</span>
     </div>
@@ -1011,7 +1011,7 @@
   <div class="print-area" id="printArea"></div>
 
   <!-- ============================================
-       FIREBASE SDK (module) — v1.9.1 with modern cache API
+       FIREBASE SDK (module) — v1.9.2 Cloud Sync
        ============================================ -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1039,8 +1039,8 @@
     const fbApp = initializeApp(firebaseConfig);
     const auth = getAuth(fbApp);
 
-    // 💾 Firestore with modern IndexedDB persistence (v1.9.1)
-    // Supports MULTIPLE TABS simultaneously + no deprecation warning
+    // 💾 Firestore with IndexedDB persistence (multi-tab)
+    // Note: Firebase-managed cache — improves repeat-load speed, not offline mode
     const db = initializeFirestore(fbApp, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
@@ -1115,7 +1115,6 @@
     /* ============================================================
        CONFIG
        ============================================================ */
-    // ⚠️ NO STORAGE_KEY for customer data — Firestore (with IndexedDB cache) is the only source.
     const ADMIN_PASSWORDS = {
       clearNotes: "3508",
       clearAmounts: "3508",
@@ -1160,7 +1159,7 @@
     let searchState = { floating:false, locked:false, left:20, top:100, width:400, height:44 };
 
     /* ============================================================
-       APP STATE (IN-MEMORY ONLY)
+       APP STATE (IN-MEMORY)
        ============================================================ */
     let customers = [];
     let filteredCustomers = [];
@@ -1182,7 +1181,7 @@
     let txnOnline = false;
 
     /* ============================================================
-       CLOUD / FIREBASE STATE
+       CLOUD STATE
        ============================================================ */
     let currentUser = null;
     let cloudSyncInFlight = false;
@@ -1435,11 +1434,9 @@
     }
 
     /* ============================================================
-       STORAGE — CLOUD-FIRST WITH FIREBASE-MANAGED INDEXEDDB CACHE
+       STORAGE — CLOUD-FIRST
        ============================================================ */
-    function loadData() {
-      customers = [];
-    }
+    function loadData() { customers = []; }
 
     function saveData() {
       if (typeof cloudSchedule === 'function') cloudSchedule();
@@ -1541,15 +1538,14 @@
           try {
             await window.FB.signOut(window.FB.auth);
 
-            // 🧹 Clear in-memory data immediately
+            // Clear in-memory data
             customers = [];
             lastPushedHash = '';
             cloudReady = false;
             refreshAddressFilter();
             renderTable();
 
-            // 🧹 Best-effort: purge Firestore IndexedDB caches so next user starts fresh.
-            // Firestore itself scopes caches per-user, but this ensures no residue remains.
+            // Best-effort: purge Firestore IndexedDB caches
             try {
               if (window.indexedDB && typeof indexedDB.databases === 'function') {
                 const dbs = await indexedDB.databases();
@@ -1563,7 +1559,7 @@
                   return Promise.resolve();
                 }));
               }
-            } catch (e) { /* best-effort, silent */ }
+            } catch (e) { /* best-effort */ }
 
             showToast('Logged out. Device cleared.', 'info');
           } catch(e) {}
@@ -1579,7 +1575,7 @@
           <div class="cloud-loader">
             <i class="fas fa-cloud"></i>
             <div class="cloud-loader-text">Loading customers from cloud…</div>
-            <div class="cloud-loader-sub">Fetching your private encrypted data from Firebase</div>
+            <div class="cloud-loader-sub">Fetching your data from Firebase (internet required)</div>
           </div>
         </td></tr>
       `;
@@ -1619,7 +1615,7 @@
         renderTable();
 
         if (!navigator.onLine) {
-          updateCloudBadge('syncing', 'Cloud: Cached (offline)');
+          updateCloudBadge('offline', 'Cloud: No internet');
         } else {
           updateCloudBadge('online', 'Cloud: Synced');
         }
@@ -1686,7 +1682,7 @@
           customers: customers,
           customerCount: customers.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.9.1-cloud-indexeddb'
+          appVersion: '1.9.2-cloud-sync'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         updateCloudBadge('online', 'Cloud: Synced');
@@ -1694,8 +1690,8 @@
       } catch (e) {
         console.error('Cloud push failed:', e);
         if (!navigator.onLine) {
-          updateCloudBadge('syncing', 'Cloud: Queued (offline)');
-          if (!silent) showToast('📥 Saved offline — will sync when online', 'warning');
+          updateCloudBadge('offline', 'Cloud: No internet');
+          if (!silent) showToast('⚠️ No internet — changes not saved yet', 'warning');
         } else {
           updateCloudBadge('offline', 'Cloud: Offline');
           if (!silent) showToast('Cloud sync failed: ' + e.message, 'error');
@@ -1865,7 +1861,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9.1-cloud-indexeddb' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9.2-cloud-sync' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -3320,12 +3316,12 @@
         <div class="info-box" style="margin-bottom:14px;">
           <strong>Logged in as:</strong> ${user ? user.email : 'Unknown'}<br>
           <strong>UID:</strong> <code style="font-size:11px;">${user ? user.uid : '—'}</code><br>
-          <strong>Cloud sync:</strong> <span style="color:var(--success);font-weight:700;">Active</span><br>
-          <strong>Offline cache:</strong> <span style="color:var(--success);font-weight:700;">IndexedDB (multi-tab, Firebase-managed)</span><br>
+          <strong>Cloud sync:</strong> <span style="color:var(--success);font-weight:700;">Active (internet required)</span><br>
+          <strong>Local cache:</strong> <span style="color:var(--success);font-weight:700;">IndexedDB (auto-managed by Firebase)</span><br>
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
           <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
-          <strong>SDK version:</strong> v1.9.1 (modern cache API)
+          <strong>App version:</strong> v1.9.2
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -3401,11 +3397,11 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.9.1 Cloud + Multi-tab IndexedDB + Logout Cleanup</p>
+            <p>RGCE SparkDesk v1.9.2 Cloud Sync</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
-          openModal('Help', '<p>Use the sidebar to navigate. Click <strong>Refresh</strong> to pull the latest data from the cloud. Works offline — data is cached locally by Firebase and synced automatically. Multiple tabs supported. Logout fully clears the device.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
+          openModal('Help', '<p>Use the sidebar to navigate. Click <strong>Refresh</strong> to pull the latest data from the cloud. <strong>Internet is required</strong> for login and to save changes. Data is cached locally by Firebase for faster loading on repeat visits. Multiple tabs supported. Logout fully clears the device.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         default: showToast('Feature coming soon.', 'info');
       }
@@ -3454,7 +3450,7 @@
       }
       try {
         setupAuth();
-        console.log('✅ Auth setup complete (v1.9.1 cloud + multi-tab IndexedDB + logout cleanup)');
+        console.log('✅ Auth setup complete (v1.9.2 cloud sync)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
@@ -3760,7 +3756,7 @@
       }
 
       setTimeout(() => {
-        showToast('Welcome to RGCE SparkDesk v1.9.1 — Cloud + Multi-tab cache + Clean logout!', 'info');
+        showToast('Welcome to RGCE SparkDesk v1.9.2 — Cloud Sync', 'info');
       }, 800);
 
       window.addEventListener('online', () => {
@@ -3768,7 +3764,7 @@
         if (currentUser) cloudPush(true);
       });
       window.addEventListener('offline', () => {
-        updateCloudBadge('syncing', 'Cloud: Cached (offline)');
+        updateCloudBadge('offline', 'Cloud: No internet');
       });
     });
 
