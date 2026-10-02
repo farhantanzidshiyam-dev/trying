@@ -1011,7 +1011,7 @@
   <div class="print-area" id="printArea"></div>
 
   <!-- ============================================
-       FIREBASE SDK (module) — v1.9 with new cache API
+       FIREBASE SDK (module) — v1.9.1 with modern cache API
        ============================================ -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1039,7 +1039,7 @@
     const fbApp = initializeApp(firebaseConfig);
     const auth = getAuth(fbApp);
 
-    // 💾 Firestore with modern IndexedDB persistence (v1.9)
+    // 💾 Firestore with modern IndexedDB persistence (v1.9.1)
     // Supports MULTIPLE TABS simultaneously + no deprecation warning
     const db = initializeFirestore(fbApp, {
       localCache: persistentLocalCache({
@@ -1540,6 +1540,31 @@
           if (!confirm('Logout?\n\nCustomer data will be cleared from this device.\nAll data stays safe in your Firebase cloud.')) return;
           try {
             await window.FB.signOut(window.FB.auth);
+
+            // 🧹 Clear in-memory data immediately
+            customers = [];
+            lastPushedHash = '';
+            cloudReady = false;
+            refreshAddressFilter();
+            renderTable();
+
+            // 🧹 Best-effort: purge Firestore IndexedDB caches so next user starts fresh.
+            // Firestore itself scopes caches per-user, but this ensures no residue remains.
+            try {
+              if (window.indexedDB && typeof indexedDB.databases === 'function') {
+                const dbs = await indexedDB.databases();
+                await Promise.all(dbs.map(d => {
+                  if (d.name && (d.name.includes('firestore') || d.name.includes('firebase'))) {
+                    return new Promise(resolve => {
+                      const req = indexedDB.deleteDatabase(d.name);
+                      req.onsuccess = req.onerror = req.onblocked = () => resolve();
+                    });
+                  }
+                  return Promise.resolve();
+                }));
+              }
+            } catch (e) { /* best-effort, silent */ }
+
             showToast('Logged out. Device cleared.', 'info');
           } catch(e) {}
         });
@@ -1661,7 +1686,7 @@
           customers: customers,
           customerCount: customers.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.9-cloud-indexeddb'
+          appVersion: '1.9.1-cloud-indexeddb'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         updateCloudBadge('online', 'Cloud: Synced');
@@ -1840,7 +1865,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9-cloud-indexeddb' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9.1-cloud-indexeddb' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -3299,7 +3324,8 @@
           <strong>Offline cache:</strong> <span style="color:var(--success);font-weight:700;">IndexedDB (multi-tab, Firebase-managed)</span><br>
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
-          <strong>SDK version:</strong> v1.9 (modern cache API)
+          <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
+          <strong>SDK version:</strong> v1.9.1 (modern cache API)
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -3375,11 +3401,11 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.9 Cloud + Multi-tab IndexedDB</p>
+            <p>RGCE SparkDesk v1.9.1 Cloud + Multi-tab IndexedDB + Logout Cleanup</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
-          openModal('Help', '<p>Use the sidebar to navigate. Click <strong>Refresh</strong> to pull the latest data from the cloud. Works offline — data is cached locally by Firebase and synced automatically. Multiple tabs supported.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
+          openModal('Help', '<p>Use the sidebar to navigate. Click <strong>Refresh</strong> to pull the latest data from the cloud. Works offline — data is cached locally by Firebase and synced automatically. Multiple tabs supported. Logout fully clears the device.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         default: showToast('Feature coming soon.', 'info');
       }
@@ -3428,7 +3454,7 @@
       }
       try {
         setupAuth();
-        console.log('✅ Auth setup complete (v1.9 cloud + multi-tab IndexedDB)');
+        console.log('✅ Auth setup complete (v1.9.1 cloud + multi-tab IndexedDB + logout cleanup)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
@@ -3734,7 +3760,7 @@
       }
 
       setTimeout(() => {
-        showToast('Welcome to RGCE SparkDesk v1.9 — Cloud + Multi-tab offline cache!', 'info');
+        showToast('Welcome to RGCE SparkDesk v1.9.1 — Cloud + Multi-tab cache + Clean logout!', 'info');
       }, 800);
 
       window.addEventListener('online', () => {
