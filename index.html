@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RGCE SparkDesk – Customer Management System</title>
+
+  <!-- Fix 1: Preconnect to CDNs — saves 100-300ms on every load -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- ⚡ Preload dark theme BEFORE any CSS paints — kills flicker completely -->
+  <!-- Preload dark theme before CSS paints to prevent any flicker -->
   <script>
     (function() {
       try {
@@ -17,18 +26,18 @@
   </script>
 
   <style>
-    /* ========== PRELOAD STYLES (applied instantly, before full CSS) ========== */
+    /* ========== PRELOAD STYLES (instant paint, no flicker) ========== */
     html.dark-preload,
     html.dark-preload body {
-      background: #1c2128 !important;
+      background: #14181f !important;
       color: #e6edf3 !important;
     }
     html.dark-preload #authOverlay {
-      background: #1c2128 !important;
+      background: #14181f !important;
     }
     html.dark-preload #authOverlay .auth-card {
-      background: #262d36 !important;
-      border-color: #3a424d !important;
+      background: #1a1e26 !important;
+      border-color: #2b3038 !important;
     }
     html.dark-preload #authOverlay .auth-brand-mark {
       background: #4a90c4 !important;
@@ -38,8 +47,8 @@
       color: #e6edf3 !important;
     }
     html.dark-preload #authOverlay input {
-      background: #1c2128 !important;
-      border-color: #3a424d !important;
+      background: #14181f !important;
+      border-color: #2b3038 !important;
       color: #e6edf3 !important;
     }
     html.dark-preload #authOverlay .auth-btn.primary {
@@ -47,12 +56,12 @@
       border-color: #4a90c4 !important;
     }
     html.dark-preload #authOverlay .auth-btn.secondary {
-      background: #2d333b !important;
+      background: #20252d !important;
       color: #e6edf3 !important;
-      border-color: #3a424d !important;
+      border-color: #2b3038 !important;
     }
 
-    /* ========== ROOT VARIABLES — LIGHT (day) ========== */
+    /* ========== LIGHT THEME ========== */
     :root {
       --bg: #f4f5f7; --panel: #ffffff; --panel-alt: #f6f8fa;
       --border: #d0d7de; --border-strong: #9ca3af;
@@ -69,34 +78,34 @@
       --shadow-lg: 0 8px 24px rgba(31, 35, 40, 0.14);
     }
 
-    /* ========== ROOT VARIABLES — SOFT DARK (medium between light & dark) ========== */
+    /* ========== DEEP SOFT DARK THEME ========== */
     body.dark-mode {
-      --bg: #1c2128;              /* soft graphite — not pure black */
-      --panel: #262d36;           /* card surface */
-      --panel-alt: #2d333b;       /* subtle hover/elevation */
-      --border: #3a424d;          /* visible but calm */
-      --border-strong: #5a6470;
-      --text: #e6edf3;            /* soft white */
-      --muted: #9ca7b3;           /* readable secondary */
+      --bg: #14181f;
+      --panel: #1a1e26;
+      --panel-alt: #20252d;
+      --border: #2b3038;
+      --border-strong: #434a54;
+      --text: #e6edf3;
+      --muted: #9ca7b3;
       --link: #7cb8e8;
-      --primary: #4a90c4;         /* softer blue */
+      --primary: #4a90c4;
       --primary-hover: #5da1d4;
-      --primary-light: #2a3441;
+      --primary-light: #1f2937;
       --success: #5cb87a;
       --success-hover: #6dc98a;
-      --success-bg: #1f3328;
+      --success-bg: #17271e;
       --danger: #e57373;
-      --danger-bg: #3a2526;
+      --danger-bg: #2e1c1d;
       --warning: #d4a843;
-      --warning-bg: #3a3225;
-      --input-bg: #1c2128;
+      --warning-bg: #2e2718;
+      --input-bg: #14181f;
       --input-focus: #7cb8e8;
-      --footer-bg: #181c22;
+      --footer-bg: #0e1218;
       --footer-text: #b8c0c9;
       --footer-muted: #7a838d;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
-      --shadow-lg: 0 8px 24px rgba(0,0,0,0.45);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
     }
 
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent;
@@ -117,7 +126,7 @@
     a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* ============ LOGIN SCREEN (Corporate + Soft Dark) ============ */
+    /* ============ LOGIN SCREEN ============ */
     #authOverlay {
       position: fixed; inset: 0;
       background: #ffffff;
@@ -129,7 +138,7 @@
       transition: background 0.15s ease;
     }
     body.dark-mode #authOverlay {
-      background: #1c2128;
+      background: #14181f;
     }
     #authOverlay .auth-container {
       width: 100%;
@@ -191,10 +200,10 @@
       transition: background 0.15s ease, border-color 0.15s ease;
     }
     body.dark-mode #authOverlay .auth-card {
-      background: #262d36;
-      border-color: #3a424d;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3),
-                  0 8px 24px rgba(0,0,0,0.35);
+      background: #1a1e26;
+      border-color: #2b3038;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4),
+                  0 8px 24px rgba(0,0,0,0.5);
     }
     #authOverlay .auth-card h2 {
       font-size: 22px;
@@ -258,15 +267,15 @@
       box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
     }
     body.dark-mode #authOverlay input {
-      background: #1c2128;
-      border-color: #3a424d;
+      background: #14181f;
+      border-color: #2b3038;
       color: #e6edf3;
     }
     body.dark-mode #authOverlay input::placeholder {
       color: #6e7781;
     }
     body.dark-mode #authOverlay input:hover {
-      border-color: #5a6470;
+      border-color: #434a54;
     }
     body.dark-mode #authOverlay input:focus {
       border-color: #7cb8e8;
@@ -321,13 +330,13 @@
       border-color: #9ca3af;
     }
     body.dark-mode #authOverlay .auth-btn.secondary {
-      background: #2d333b;
+      background: #20252d;
       color: #e6edf3;
-      border-color: #3a424d;
+      border-color: #2b3038;
     }
     body.dark-mode #authOverlay .auth-btn.secondary:hover {
-      background: #353c45;
-      border-color: #5a6470;
+      background: #2a2f38;
+      border-color: #434a54;
     }
     #authOverlay .auth-btn i {
       font-size: 13px;
@@ -354,8 +363,8 @@
     }
     body.dark-mode #authMsg.error {
       color: #e57373;
-      background: #3a2526;
-      border-color: #5c3838;
+      background: #2e1c1d;
+      border-color: #4a2a2b;
     }
     #authMsg.success {
       color: #1a7f37;
@@ -367,8 +376,8 @@
     }
     body.dark-mode #authMsg.success {
       color: #5cb87a;
-      background: #1f3328;
-      border-color: #2d4a38;
+      background: #17271e;
+      border-color: #234a32;
     }
     #authOverlay .auth-divider {
       display: flex;
@@ -392,7 +401,7 @@
     }
     body.dark-mode #authOverlay .auth-divider::before,
     body.dark-mode #authOverlay .auth-divider::after {
-      background: #3a424d;
+      background: #2b3038;
     }
     #authOverlay .auth-footer {
       margin-top: 24px;
@@ -408,7 +417,7 @@
       margin-right: 4px;
     }
     body.dark-mode #authOverlay .auth-footer {
-      border-top-color: #3a424d;
+      border-top-color: #2b3038;
       color: #9ca7b3;
     }
     body.dark-mode #authOverlay .auth-footer i {
@@ -995,9 +1004,7 @@
 </head>
 <body>
 
-  <!-- ============================================
-       LOGIN SCREEN (Corporate + Soft Dark)
-       ============================================ -->
+  <!-- LOGIN SCREEN -->
   <div id="authOverlay">
     <div class="auth-container">
 
@@ -1050,9 +1057,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       GOV STRIP
-       ============================================ -->
+  <!-- GOV STRIP -->
   <div class="gov-strip no-print">
     <div class="gov-strip-left">
       <i class="fas fa-phone"></i>
@@ -1085,9 +1090,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       OFFICIAL HEADER
-       ============================================ -->
+  <!-- OFFICIAL HEADER -->
   <div class="official-header no-print">
     <div class="header-center">
       <div class="shop-name">Roza Gift Corner &amp; Electric</div>
@@ -1100,9 +1103,7 @@
     </div>
   </div>
 
-  <!-- ============================================
-       SEARCH BAR
-       ============================================ -->
+  <!-- SEARCH BAR -->
   <div class="search-wrapper inline" id="searchWrapper">
     <div class="search-drag-handle" id="searchDragHandle" title="Drag to move search bar">
       <span class="drag-grip"><i class="fas fa-grip-vertical"></i> <span id="searchHandleLabel">Search Bar</span></span>
@@ -1118,9 +1119,7 @@
     <div class="search-resize-handle" id="searchResizeHandle" title="Drag to resize"></div>
   </div>
 
-  <!-- ============================================
-       APP BODY
-       ============================================ -->
+  <!-- APP BODY -->
   <div class="app-body">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -1154,6 +1153,7 @@
     </aside>
 
     <main class="main-content">
+      <!-- ADD CUSTOMER FORM -->
       <div class="panel form-panel add-customer-panel" id="addCustomerPanel">
         <div class="panel-header">
           <span><i class="fas fa-user-plus"></i> Add New Customer</span>
@@ -1241,6 +1241,7 @@
         </div>
       </div>
 
+      <!-- CUSTOMER REGISTER TABLE -->
       <div class="panel">
         <div class="panel-header">
           <span><i class="fas fa-users"></i> Customer Register</span>
@@ -1315,6 +1316,7 @@
     </main>
   </div>
 
+  <!-- FOOTER -->
   <footer class="app-footer no-print">
     <div class="footer-links">
       <a href="#" data-action="dashboard">Dashboard</a>
@@ -1356,6 +1358,7 @@
     <div class="admin-link" id="adminPanelLink">Admin Panel</div>
   </footer>
 
+  <!-- TOAST + MODAL + PRINT AREA -->
   <div class="toast-container" id="toastContainer"></div>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -1371,6 +1374,7 @@
 
   <div class="print-area" id="printArea"></div>
 
+  <!-- FIREBASE SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
@@ -1416,10 +1420,14 @@
     window.dispatchEvent(new Event('firebase-ready'));
   </script>
 
+  <!-- MAIN APP LOGIC -->
   <script>
   (function() {
     'use strict';
 
+    /* ============================================================
+       TEXT-COPY PROTECTION
+       ============================================================ */
     (function protectTextCopy() {
       document.addEventListener('contextmenu', function(e) {
         const tag = (e.target.tagName || '').toLowerCase();
@@ -1460,6 +1468,9 @@
       });
     })();
 
+    /* ============================================================
+       CONFIG
+       ============================================================ */
     const ADMIN_PASSWORDS = {
       clearNotes: "3508",
       clearAmounts: "3508",
@@ -1480,6 +1491,9 @@
     const BACKUP_PASSWORD = "3508";
     const LAST_PULL_KEY = "roza_last_sheet_pull";
 
+    /* ============================================================
+       TRANSACTION SHEET CONFIG
+       ============================================================ */
     const TXN_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjSmRW5d9oPxWij-aRYZvz_7_RATW6AN2TRp5FvvdCYg7AWdc5jHlEJ-NdMZwnNyhAOQ/exec";
     const TXN_SPREADSHEET_ID = "1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ";
     const TXN_SHEET_PREVIEW_URL = "https://docs.google.com/spreadsheets/d/1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ/preview?rm=minimal&widget=true&headers=false&single=true";
@@ -1494,9 +1508,15 @@
       "Kumirpukur","Sonapur","Lolobolo","Vimpur","Munshipara, Kh P","Khalishakuri, Kh P"
     ];
 
+    /* ============================================================
+       SEARCH BAR STATE
+       ============================================================ */
     const SEARCH_STATE_KEY = "rgce_searchbar_state_v1";
     let searchState = { floating:false, locked:false, left:20, top:100, width:400, height:44 };
 
+    /* ============================================================
+       APP STATE
+       ============================================================ */
     let customers = [];
     let filteredCustomers = [];
     let currentPage = 1;
@@ -1516,6 +1536,9 @@
     let txnRefreshTimer = null;
     let txnOnline = false;
 
+    /* ============================================================
+       CLOUD STATE
+       ============================================================ */
     let currentUser = null;
     let cloudSyncInFlight = false;
     let cloudPushTimer = null;
@@ -1523,6 +1546,9 @@
     let lastPushedHash = "";
     let refreshInFlight = false;
 
+    /* ============================================================
+       UTILITIES
+       ============================================================ */
     function formatMoney(val) {
       if (val === undefined || val === null || val === 0) return '';
       return Math.round(val).toLocaleString('en-US');
@@ -1586,6 +1612,9 @@
       return null;
     }
 
+    /* ============================================================
+       CLOUD STATUS UI
+       ============================================================ */
     function updateCloudBadge(status, text) {
       const el = document.getElementById('cloudStatusBadge');
       if (!el) return;
@@ -1594,6 +1623,9 @@
       el.innerHTML = `<span class="dot"></span>${text || 'Cloud'}`;
     }
 
+    /* ============================================================
+       SEARCH BAR: DRAG / RESIZE / LOCK
+       ============================================================ */
     function loadSearchState() {
       try {
         const raw = localStorage.getItem(SEARCH_STATE_KEY);
@@ -1733,6 +1765,9 @@
       window.addEventListener('resize', applySearchState);
     }
 
+    /* ============================================================
+       ADDRESS FILTER DROPDOWN
+       ============================================================ */
     function refreshAddressFilter() {
       const sel = document.getElementById('filterAddress');
       if (!sel) return;
@@ -1754,6 +1789,9 @@
       else sel.value = '';
     }
 
+    /* ============================================================
+       STORAGE - CLOUD-FIRST
+       ============================================================ */
     function loadData() { customers = []; }
 
     function saveData() {
@@ -1768,6 +1806,9 @@
       autoSyncTimer = setTimeout(() => { syncToGoogleSheets(true); }, 5000);
     }
 
+    /* ============================================================
+       AUTH
+       ============================================================ */
     function translateAuthError(code) {
       const map = {
         'auth/invalid-email': 'Invalid email address.',
@@ -1809,8 +1850,6 @@
           loginBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Sign in';
         }
       });
-      passInput.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
-      emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
 
       resetBtn.addEventListener('click', async () => {
         const email = emailInput.value.trim();
@@ -1973,7 +2012,7 @@
           customers: customers,
           customerCount: customers.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.9.4-soft-dark'
+          appVersion: '1.9.6-fast-boot'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
         updateCloudBadge('online', 'Cloud: Synced');
@@ -2030,6 +2069,9 @@
     window.__cloudSchedule = cloudSchedule;
     window.__updateCloudBadge = updateCloudBadge;
 
+    /* ============================================================
+       GOOGLE SHEETS SYNC
+       ============================================================ */
     async function syncToGoogleSheets(silent = false) {
       if (!APPS_SCRIPT_URL) { if (!silent) showToast('Google Sheets not configured.', 'error'); return; }
       if (customers.length === 0) { if (!silent) showToast('No customers to sync.', 'warning'); return; }
@@ -2128,6 +2170,9 @@
       }
     }
 
+    /* ============================================================
+       TELEGRAM BACKUP
+       ============================================================ */
     function updateTelegramStatus() {
       const box = document.getElementById('telegramStatusText');
       if (!box) return;
@@ -2145,7 +2190,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9.4-soft-dark' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.9.6-fast-boot' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -2167,6 +2212,9 @@
       } catch (e) { showToast('Telegram backup failed: ' + e.message, 'error'); }
     }
 
+    /* ============================================================
+       TRANSACTION SHEET API
+       ============================================================ */
     function txnApiConfigured() {
       return TXN_APPS_SCRIPT_URL && TXN_APPS_SCRIPT_URL.indexOf('PASTE_') === -1 && TXN_APPS_SCRIPT_URL.startsWith('http');
     }
@@ -2342,6 +2390,9 @@
       updateTxnLiveBadge(ok ? 'online' : 'offline');
     }
 
+    /* ============================================================
+       TRANSACTION TRACKING
+       ============================================================ */
     function buildAllTransactions() {
       if (txnOnline && txnSheetData.length > 0) {
         return txnSheetData.map(r => ({
@@ -2680,6 +2731,9 @@
       triggerPrint(html);
     }
 
+    /* ============================================================
+       TABLE RENDER
+       ============================================================ */
     function applyFilters() {
       const search = (document.getElementById('globalSearch').value || '').trim().toLowerCase();
       const addrFilter = document.getElementById('filterAddress').value;
@@ -2817,6 +2871,9 @@
       const fd = document.getElementById('footerDue'); if (fd) fd.textContent = dueCustomers;
     }
 
+    /* ============================================================
+       MODAL
+       ============================================================ */
     function openModal(title, bodyHTML, footerHTML, wide = false) {
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalBody').innerHTML = bodyHTML;
@@ -2839,6 +2896,9 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
     window.closeModal = closeModal;
 
+    /* ============================================================
+       PREVIEW
+       ============================================================ */
     function openPreviewModal(id) {
       const c = customers.find(x => x.id === id);
       if (!c) return;
@@ -2898,6 +2958,9 @@
       });
     }
 
+    /* ============================================================
+       PAYMENT
+       ============================================================ */
     function openPaymentModal(id) {
       const c = customers.find(x => x.id === id);
       if (!c) { showToast('Customer not found.', 'error'); return; }
@@ -2960,6 +3023,9 @@
       });
     }
 
+    /* ============================================================
+       EDIT
+       ============================================================ */
     function openEditModal(id) {
       const c = customers.find(x => x.id === id);
       if (!c) return;
@@ -3031,6 +3097,9 @@
       });
     }
 
+    /* ============================================================
+       DELETE
+       ============================================================ */
     function openDeleteModal(id) {
       const c = customers.find(x => x.id === id);
       if (!c) { showToast('Customer not found.', 'error'); return; }
@@ -3061,6 +3130,9 @@
       });
     }
 
+    /* ============================================================
+       PRINT
+       ============================================================ */
     function openPrintPreview(id) {
       const c = customers.find(x => x.id === id);
       if (!c) { showToast('Customer not found.', 'error'); return; }
@@ -3246,6 +3318,7 @@
       triggerPrint(html);
     }
 
+    /* ============ EXPOSE FOR MODALS ============ */
     window.__app = {
       showToast, triggerPrint, saveData, renderTable, refreshAddressFilter,
       openModal, closeModal, openPreviewModal, openPaymentModal, openEditModal,
@@ -3262,6 +3335,9 @@
       refreshFromCloud
     };
 
+    /* ============================================================
+       SUMMARY REPORT
+       ============================================================ */
     function openSummaryReport() {
       const totalCustomers = customers.length;
       const totalDue = customers.reduce((s, c) => s + (c.due || 0), 0);
@@ -3328,6 +3404,9 @@
       });
     }
 
+    /* ============================================================
+       LIVE STATS
+       ============================================================ */
     function openLiveStats() {
       applyFilters();
       const total = filteredCustomers.length;
@@ -3353,6 +3432,9 @@
       document.getElementById('closeLiveStatsBtn').addEventListener('click', closeModal);
     }
 
+    /* ============================================================
+       PASSWORD PROMPT
+       ============================================================ */
     function promptPassword(title, correctPassword, callback) {
       const body = `
         <div class="form-group">
@@ -3369,11 +3451,15 @@
         if (val === correctPassword) { closeModal(); callback(); }
         else { document.getElementById('promptPasswordError').classList.add('visible'); }
       });
-      document.getElementById('promptPasswordInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('promptPasswordSubmit').click();
-      });
+      setTimeout(() => {
+        const inp = document.getElementById('promptPasswordInput');
+        if (inp) inp.focus();
+      }, 100);
     }
 
+    /* ============================================================
+       BACKUP / RESTORE MODAL
+       ============================================================ */
     function openBackupRestoreModal() {
       const body = `
         <div style="margin-bottom:18px;">
@@ -3436,6 +3522,9 @@
       });
     }
 
+    /* ============================================================
+       CLEAR AMOUNTS BY SOURCE
+       ============================================================ */
     function openClearBySourceModal() {
       const sources = [...new Set(customers.map(c => c.source).filter(Boolean))];
       const body = `
@@ -3470,6 +3559,9 @@
       });
     }
 
+    /* ============================================================
+       TELEGRAM SETUP
+       ============================================================ */
     function openTelegramSetup() {
       const body = `
         <p style="margin-bottom:8px;">1. Create a bot with @BotFather on Telegram and get the token.</p>
@@ -3510,6 +3602,9 @@
       });
     }
 
+    /* ============================================================
+       GOOGLE SHEETS PANEL
+       ============================================================ */
     function openGoogleSheetsPanel() {
       const lastPull = localStorage.getItem(LAST_PULL_KEY);
       const lastPullText = lastPull ? new Date(lastPull).toLocaleString() : 'Never';
@@ -3541,6 +3636,9 @@
       document.getElementById('fullscreenSheetBtn').addEventListener('click', () => { window.open(SHEET_EDIT_URL, '_blank', 'width=1200,height=800'); });
     }
 
+    /* ============================================================
+       ADMIN PANEL
+       ============================================================ */
     function openAdminPanel() {
       const user = currentUser;
       const body = `
@@ -3552,7 +3650,7 @@
           <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
           <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span><br>
           <strong>Logout cache purge:</strong> <span style="color:var(--success);font-weight:700;">Enabled</span><br>
-          <strong>App version:</strong> v1.9.4
+          <strong>App version:</strong> v1.9.6
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -3574,6 +3672,9 @@
       document.getElementById('closeAdminBtn').addEventListener('click', closeModal);
     }
 
+    /* ============================================================
+       SIDEBAR ACTIONS
+       ============================================================ */
     function handleSidebarAction(action) {
       switch (action) {
         case 'dashboard': renderTable(); break;
@@ -3625,7 +3726,7 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.9.4 Soft Dark</p>
+            <p>RGCE SparkDesk v1.9.6 Fast Boot</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
@@ -3635,6 +3736,9 @@
       }
     }
 
+    /* ============================================================
+       ADD FORM HELPERS
+       ============================================================ */
     function showAddForm() {
       if (!currentUser) { showToast('Please login first.', 'warning'); return; }
       const panel = document.getElementById('addCustomerPanel');
@@ -3665,6 +3769,9 @@
       if (csg) csg.style.display = 'none';
     }
 
+    /* ============================================================
+       INIT
+       ============================================================ */
     function initFirebase() {
       if (!window.FB) {
         console.error('Firebase not loaded yet');
@@ -3672,7 +3779,7 @@
       }
       try {
         setupAuth();
-        console.log('✅ Auth setup complete (v1.9.4 soft dark, flicker-free)');
+        console.log('Auth setup complete (v1.9.6 fast boot)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
@@ -3680,24 +3787,25 @@
       }
     }
 
+    /* Fix 2: Event-based bootstrap — no polling delay */
     (function bootstrap() {
+      // Case 1: Firebase already loaded (rare, but possible on warm cache)
       if (window.FB) {
         initFirebase();
-      } else {
-        let attempts = 0;
-        const check = setInterval(() => {
-          attempts++;
-          if (window.FB) {
-            clearInterval(check);
-            initFirebase();
-          } else if (attempts > 100) {
-            clearInterval(check);
-            console.error('❌ Firebase SDK never loaded after 10s');
-            const msgEl = document.getElementById('authMsg');
-            if (msgEl) msgEl.textContent = 'Firebase failed to load. Refresh the page.';
-          }
-        }, 100);
+        return;
       }
+      // Case 2: Wait for the event Firebase fires after loading
+      window.addEventListener('firebase-ready', function() {
+        initFirebase();
+      }, { once: true });
+      // Safety net: If event never fires within 10s, show error
+      setTimeout(function() {
+        if (!window.FB) {
+          console.error('Firebase SDK never loaded after 10s');
+          var msgEl = document.getElementById('authMsg');
+          if (msgEl) msgEl.textContent = 'Firebase failed to load. Refresh the page.';
+        }
+      }, 10000);
     })();
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -3718,7 +3826,6 @@
         if (dark) document.body.classList.add('dark-mode');
       }
 
-      // 🔑 Remove preload class — body.dark-mode is now applied, transitions smooth from here
       document.documentElement.classList.remove('dark-preload');
 
       const collapsed = localStorage.getItem('roza_sidebar_state') === 'collapsed';
@@ -3980,8 +4087,36 @@
         });
       }
 
+      document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+
+        var target = e.target;
+        var tag = (target.tagName || '').toLowerCase();
+
+        if (tag === 'textarea' || tag === 'button' || tag === 'a') return;
+        if (target.closest && target.closest('#addCustomerPanel')) return;
+
+        var modalOverlay = document.getElementById('modalOverlay');
+        if (modalOverlay && modalOverlay.classList.contains('open')) {
+          e.preventDefault();
+          var btn = document.querySelector('#modalFooter .btn-primary')
+                 || document.querySelector('#modalBody .btn-primary');
+          if (btn && !btn.disabled) btn.click();
+          return;
+        }
+
+        var authOverlay = document.getElementById('authOverlay');
+        if (authOverlay && authOverlay.style.display !== 'none') {
+          var loginBtn = document.getElementById('authLoginBtn');
+          if (loginBtn && !loginBtn.disabled) {
+            e.preventDefault();
+            loginBtn.click();
+          }
+        }
+      }, true);
+
       setTimeout(() => {
-        showToast('Welcome to RGCE SparkDesk v1.9.4 — Soft Dark', 'info');
+        showToast('Welcome to RGCE SparkDesk v1.9.6 — Fast Boot', 'info');
       }, 800);
 
       window.addEventListener('online', () => {
