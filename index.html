@@ -114,6 +114,17 @@
     .cloud-badge.offline .dot { background: #f85149; }
     @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
 
+    /* Refresh button spin */
+    #refreshFromCloudBtn.spinning i,
+    .refresh-spinning i {
+      animation: refreshSpin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes refreshSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
     /* ============ GOV STRIP ============ */
     .gov-strip {
       background: var(--header-bg); color: var(--header-text);
@@ -141,6 +152,16 @@
     }
     .btn-top:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.32); }
     .btn-top i { margin-right: 4px; }
+    #refreshFromCloudBtn {
+      background: rgba(46,160,67,0.18);
+      border-color: rgba(46,160,67,0.55);
+      color: #7ee787;
+    }
+    #refreshFromCloudBtn:hover {
+      background: rgba(46,160,67,0.32);
+      border-color: #2ea043;
+      color: #fff;
+    }
     .dark-toggle-label {
       display: flex; align-items: center; gap: 6px; font-size: 12px; color: #c9d1d9;
       cursor: pointer; padding: 4px 8px; background: rgba(255,255,255,0.05); border-radius: 4px;
@@ -262,6 +283,7 @@
     .sidebar-item.danger { color: var(--danger); }
     .sidebar-item.danger i { color: var(--danger); }
     .sidebar-item.danger:hover { background: var(--danger-bg); border-left-color: var(--danger); }
+    .sidebar-item[data-action="refreshFromCloud"] i { color: var(--link); }
     .sidebar-footer {
       padding: 10px 14px; border-top: 1px solid var(--border);
       font-size: 12px; color: var(--muted); background: var(--panel-alt); font-weight: 600;
@@ -563,6 +585,25 @@
     .text-danger { color: var(--danger); }
     .text-success { color: var(--success); }
 
+    /* ============ CLOUD LOADER ============ */
+    .cloud-loader {
+      min-height: 280px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .cloud-loader i {
+      font-size: 42px; color: var(--primary); margin-bottom: 14px;
+      display: block; pointer-events: none;
+      animation: cloudSpin 1.6s linear infinite;
+    }
+    .cloud-loader .cloud-loader-text { font-size: 14px; font-weight: 600; }
+    .cloud-loader .cloud-loader-sub { font-size: 12px; margin-top: 6px; opacity: 0.75; }
+    @keyframes cloudSpin {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-6px); opacity: 0.6; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
     /* ============ PRINT ============ */
     .print-area { display: none; }
     @media print {
@@ -634,8 +675,8 @@
       <button class="auth-btn secondary" id="authResetBtn">Forgot Password?</button>
       <div id="authMsg"></div>
       <div class="auth-footer">
-        🔒 Data is encrypted in transit and stored in your private cloud.<br>
-        Only you can access it with your email and password.
+        🔒 Cloud-first storage with offline cache.<br>
+        Your login session is remembered until you logout.
       </div>
     </div>
   </div>
@@ -658,6 +699,9 @@
     </div>
     <div class="gov-strip-right">
       <span class="cloud-badge" id="cloudStatusBadge"><span class="dot"></span>Cloud: …</span>
+      <button class="btn-top" id="refreshFromCloudBtn" title="Pull latest data from cloud">
+        <i class="fas fa-rotate"></i> Refresh
+      </button>
       <button class="btn-top" id="forceCloudSyncBtn" title="Force push to cloud">
         <i class="fas fa-cloud-arrow-up"></i> Sync
       </button>
@@ -716,6 +760,7 @@
       </div>
       <nav class="sidebar-nav">
         <div class="sidebar-item active" data-action="dashboard"><i class="fas fa-tachometer-alt"></i><span class="sidebar-label">Dashboard</span></div>
+        <div class="sidebar-item" data-action="refreshFromCloud"><i class="fas fa-rotate"></i><span class="sidebar-label">Refresh from Cloud</span></div>
         <div class="sidebar-item" data-action="transactionTracking"><i class="fas fa-exchange-alt"></i><span class="sidebar-label">Transaction Tracking</span></div>
         <div class="sidebar-item" data-action="advancedFilter"><i class="fas fa-filter"></i><span class="sidebar-label">Advanced Filter</span></div>
         <div class="sidebar-item" data-action="liveStats"><i class="fas fa-chart-bar"></i><span class="sidebar-label">Live Stats</span></div>
@@ -940,7 +985,7 @@
     <div class="footer-badges">
       <span class="badge">DMCA</span>
       <span class="badge">SSL</span>
-      <span class="badge">Auto Backup</span>
+      <span class="badge">Cloud + Offline</span>
       <span class="badge"><a href="https://farhantanzidshiyam-dev.github.io/rozagiftcorner-backup/" target="_blank">Android App</a></span>
       <span class="badge" id="liveTimeBadge">--:--:--</span>
     </div>
@@ -972,10 +1017,11 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-      sendPasswordResetEmail
+      sendPasswordResetEmail, setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, doc, setDoc, getDoc, serverTimestamp
+      getFirestore, doc, setDoc, getDoc, serverTimestamp,
+      enableIndexedDbPersistence
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -989,9 +1035,29 @@
     };
 
     const fbApp = initializeApp(firebaseConfig);
+    const auth = getAuth(fbApp);
+    const db = getFirestore(fbApp);
+
+    // 🔐 Login session saved in localStorage (until logout)
+    setPersistence(auth, browserLocalPersistence).catch(err => {
+      console.warn('Auth persistence setup failed:', err);
+    });
+
+    // 💾 Enable Firestore IndexedDB persistence — offline cache + queued writes
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        // Multiple tabs open — persistence only active in one tab
+        console.warn('IndexedDB persistence: only one tab can use it. Other tabs will work online-only.');
+      } else if (err.code === 'unimplemented') {
+        // Browser doesn't support IndexedDB — fall back to online-only silently
+        console.warn('IndexedDB persistence not supported in this browser. Running in online-only mode.');
+      } else {
+        console.warn('IndexedDB persistence error:', err);
+      }
+    });
+
     window.FB = {
-      auth: getAuth(fbApp),
-      db: getFirestore(fbApp),
+      auth, db,
       signInWithEmailAndPassword, signOut, onAuthStateChanged,
       sendPasswordResetEmail,
       doc, setDoc, getDoc, serverTimestamp
@@ -1053,7 +1119,7 @@
     /* ============================================================
        CONFIG
        ============================================================ */
-    const STORAGE_KEY = "roza_gift_corner_customers_v1.5";
+    // ⚠️ NO STORAGE_KEY for customer data — Firestore (with IndexedDB cache) is the only source.
     const ADMIN_PASSWORDS = {
       clearNotes: "3508",
       clearAmounts: "3508",
@@ -1067,13 +1133,12 @@
     const SHEET_PREVIEW_URL = "https://docs.google.com/spreadsheets/d/1LA-AbQ24BmmTqOk9We4zTC_RdsgX4oZCct-_nu8b1j8/preview?rm=minimal&widget=true&headers=false&single=true";
     const SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1LA-AbQ24BmmTqOk9We4zTC_RdsgX4oZCct-_nu8b1j8/edit";
     const GOOGLE_DRIVE_URL = "https://drive.google.com/drive/folders/1yYuczLULObc0TrnQ3XlInfD8MH08POfs?usp=drive_link";
-    const TELEGRAM_TOKEN_KEY = "telegram_bot_token";
-    const TELEGRAM_CHAT_KEY = "telegram_chat_id";
-    const LAST_SYNC_KEY = "roza_last_sheet_sync";
-    const LAST_LOCAL_DOWNLOAD_KEY = "last_local_download";
+    const TELEGRAM_TOKEN_KEY = "telegram_bot_token";     // config only — not customer data
+    const TELEGRAM_CHAT_KEY  = "telegram_chat_id";       // config only — not customer data
+    const LAST_SYNC_KEY      = "roza_last_sheet_sync";   // UI hint only
+    const LAST_LOCAL_DOWNLOAD_KEY = "last_local_download"; // UI hint only
     const BACKUP_PASSWORD = "3508";
-    const LAST_PULL_KEY = "roza_last_sheet_pull";
-    const LAST_LOCAL_UPDATE_KEY = "rgce_local_updated";
+    const LAST_PULL_KEY = "roza_last_sheet_pull";        // UI hint only
 
     /* ============================================================
        TRANSACTION TRACKING GOOGLE SHEET CONFIG
@@ -1082,7 +1147,7 @@
     const TXN_SPREADSHEET_ID = "1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ";
     const TXN_SHEET_PREVIEW_URL = "https://docs.google.com/spreadsheets/d/1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ/preview?rm=minimal&widget=true&headers=false&single=true";
     const TXN_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1ZqqRi3j32fdBdT8nQ35OnnFWYNMThfjM_nHB95BSBeQ/edit";
-    const TXN_LAST_SYNC_KEY = "rgce_last_txn_sync";
+    const TXN_LAST_SYNC_KEY = "rgce_last_txn_sync";      // UI hint only
     const TXN_REFRESH_INTERVAL_MS = 30000;
 
     const FIXED_ADDRESS_LIST = [
@@ -1093,15 +1158,15 @@
     ];
 
     /* ============================================================
-       SEARCH BAR STATE
+       SEARCH BAR STATE (UI only — safe in localStorage)
        ============================================================ */
     const SEARCH_STATE_KEY = "rgce_searchbar_state_v1";
     let searchState = { floating:false, locked:false, left:20, top:100, width:400, height:44 };
 
     /* ============================================================
-       APP STATE
+       APP STATE (IN-MEMORY ONLY)
        ============================================================ */
-    let customers = [];
+    let customers = [];           // ⚠️ memory only — never persisted to localStorage
     let filteredCustomers = [];
     let currentPage = 1;
     let pageSize = 35;
@@ -1113,6 +1178,7 @@
     let telegramToken = localStorage.getItem(TELEGRAM_TOKEN_KEY) || '';
     let telegramChatId = localStorage.getItem(TELEGRAM_CHAT_KEY) || '';
     let autoSyncTimer = null;
+    let cloudReady = false;       // true once first cloud load completes
 
     let txnFilters = { search:'', type:'', customer:'', dateFrom:'', dateTo:'' };
     let txnSheetData = [];
@@ -1127,6 +1193,7 @@
     let cloudPushTimer = null;
     let cloudPullTimer = null;
     let lastPushedHash = "";
+    let refreshInFlight = false;
 
     /* ============================================================
        UTILITIES
@@ -1372,39 +1439,23 @@
     }
 
     /* ============================================================
-       STORAGE
+       STORAGE — CLOUD-FIRST WITH FIREBASE-MANAGED INDEXEDDB CACHE
+       (No customer data written to localStorage by this code)
        ============================================================ */
     function loadData() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        try {
-          customers = JSON.parse(raw);
-          if (!Array.isArray(customers)) customers = [];
-          customers = customers.map(c => {
-            c.id = c.id || generateId();
-            c.due = Math.round(Number(c.due)) || 0;
-            c.paid = Math.round(Number(c.paid)) || 0;
-            c.note = c.note || "";
-            c.address = c.address || "";
-            c.source = c.source || "";
-            c.phone = c.phone || "";
-            c.dateAdded = c.dateAdded || todayDDMMYYYY();
-            if (!c.transactionHistory) c.transactionHistory = [];
-            return c;
-          });
-        } catch (e) { customers = []; }
-      } else { customers = []; }
+      // Cloud-first. Firestore + IndexedDB cache populate this after login.
+      customers = [];
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
-      localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
-      triggerAutoSync();
+      // Push to Firestore; SDK queues writes offline automatically.
       if (typeof cloudSchedule === 'function') cloudSchedule();
+      triggerAutoSync();
     }
 
     function triggerAutoSync() {
       if (customers.length === 0) return;
+      if (!currentUser) return;
       clearTimeout(autoSyncTimer);
       autoSyncTimer = setTimeout(() => { syncToGoogleSheets(true); }, 5000);
     }
@@ -1473,10 +1524,17 @@
         if (user) {
           overlay.style.display = 'none';
           updateCloudBadge('syncing', 'Syncing…');
-          await cloudLoad();
+          showCloudLoader();
+          await cloudLoad(true);   // silent — no toast on auto-login load
           cloudStartAutoSync();
           showToast('☁️ Connected as ' + user.email, 'success');
         } else {
+          // Clear in-memory state on logout. IndexedDB cache is cleared by Firebase signOut.
+          customers = [];
+          lastPushedHash = '';
+          cloudReady = false;
+          refreshAddressFilter();
+          renderTable();
           overlay.style.display = 'flex';
           cloudStopAutoSync();
           loginBtn.disabled = false;
@@ -1487,51 +1545,133 @@
       const logoutBtn = document.getElementById('logoutBtn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
-          if (!confirm('Logout? Local data stays on this device.')) return;
-          try { await window.FB.signOut(window.FB.auth); showToast('Logged out.', 'info'); } catch(e) {}
+          if (!confirm('Logout?\n\nCustomer data will be cleared from this device.\nAll data stays safe in your Firebase cloud.')) return;
+          try {
+            await window.FB.signOut(window.FB.auth);
+            // Clear IndexedDB cache so next login starts fresh
+            try {
+              if (window.indexedDB && indexedDB.databases) {
+                const dbs = await indexedDB.databases();
+                dbs.forEach(d => {
+                  if (d.name && (d.name.includes('firestore') || d.name.includes('firebase'))) {
+                    indexedDB.deleteDatabase(d.name);
+                  }
+                });
+              }
+            } catch (e) { /* IndexedDB cleanup is best-effort */ }
+            showToast('Logged out. Device cleared.', 'info');
+          } catch(e) {}
         });
       }
     }
 
-    async function cloudLoad() {
-      if (!currentUser) return;
+    function showCloudLoader() {
+      const tbody = document.getElementById('customerTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = `
+        <tr><td colspan="9">
+          <div class="cloud-loader">
+            <i class="fas fa-cloud"></i>
+            <div class="cloud-loader-text">Loading customers from cloud…</div>
+            <div class="cloud-loader-sub">Fetching your private encrypted data from Firebase</div>
+          </div>
+        </td></tr>
+      `;
+    }
+
+    async function cloudLoad(silent = false) {
+      if (!currentUser) return false;
+      const t0 = performance.now();
       try {
         const ref = window.FB.doc(window.FB.db, 'shops', currentUser.uid);
+        // With IndexedDB persistence, this resolves instantly from cache if offline,
+        // then Firestore syncs in the background.
         const snap = await window.FB.getDoc(ref);
-        const localRaw = localStorage.getItem(STORAGE_KEY);
-        const localData = localRaw ? JSON.parse(localRaw) : [];
-        const localTime = parseInt(localStorage.getItem(LAST_LOCAL_UPDATE_KEY) || '0', 10);
 
         if (snap.exists()) {
           const cloud = snap.data();
-          const cloudCustomers = cloud.customers || [];
-          const cloudTime = cloud.updatedAt?.seconds ? cloud.updatedAt.seconds * 1000 : 0;
-          if (cloudCustomers.length === 0 && localData.length > 0) {
-            await cloudPush(true);
-            updateCloudBadge('online', 'Cloud: Synced');
-            return;
-          }
-          if (cloudTime > localTime || cloudCustomers.length > localData.length) {
-            customers = cloudCustomers;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
-            localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
-            lastPushedHash = JSON.stringify(customers);
-            refreshAddressFilter();
-            renderTable();
-            showToast(`☁️ Loaded ${customers.length} customers from cloud`, 'info');
-          } else {
-            await cloudPush(true);
-          }
+          customers = Array.isArray(cloud.customers) ? cloud.customers : [];
+          customers = customers.map(c => {
+            c.id = c.id || generateId();
+            c.due = Math.round(Number(c.due)) || 0;
+            c.paid = Math.round(Number(c.paid)) || 0;
+            c.note = c.note || "";
+            c.address = c.address || "";
+            c.source = c.source || "";
+            c.phone = c.phone || "";
+            c.dateAdded = c.dateAdded || todayDDMMYYYY();
+            if (!c.transactionHistory) c.transactionHistory = [];
+            return c;
+          });
+          lastPushedHash = JSON.stringify(customers);
         } else {
+          customers = [];
           await cloudPush(true);
         }
-        updateCloudBadge('online', 'Cloud: Synced');
+
+        cloudReady = true;
+
+        // ⚡ Instant render
+        refreshAddressFilter();
+        renderTable();
+
+        // Detect offline: if navigator says offline, badge shows cached
+        if (!navigator.onLine) {
+          updateCloudBadge('syncing', 'Cloud: Cached (offline)');
+        } else {
+          updateCloudBadge('online', 'Cloud: Synced');
+        }
+
+        const now = new Date();
+        lastSyncTime = now;
+        localStorage.setItem(LAST_SYNC_KEY, now.toISOString());
+        const el = document.getElementById('lastSyncTop');
+        if (el) el.textContent = 'Last Sync: ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+        const ms = Math.round(performance.now() - t0);
+        if (!silent) showToast(`☁️ Loaded ${customers.length} customers from cloud (${ms}ms)`, 'success');
+        return true;
       } catch (e) {
         console.error('Cloud load failed:', e);
         updateCloudBadge('offline', 'Cloud: Error');
-        showToast('Cloud load failed: ' + e.message, 'error');
+        if (!silent) showToast('Cloud load failed: ' + e.message, 'error');
+        customers = [];
+        cloudReady = true;
+        refreshAddressFilter();
+        renderTable();
+        return false;
       }
     }
+
+    /* ============================================================
+       REFRESH FROM CLOUD (manual button)
+       ============================================================ */
+    async function refreshFromCloud() {
+      if (!currentUser) {
+        showToast('Please login first.', 'warning');
+        return;
+      }
+      if (refreshInFlight) {
+        showToast('Refresh already in progress…', 'info');
+        return;
+      }
+      refreshInFlight = true;
+
+      const btn = document.getElementById('refreshFromCloudBtn');
+      if (btn) btn.classList.add('spinning');
+      updateCloudBadge('syncing', 'Refreshing…');
+
+      try {
+        const ok = await cloudLoad(false);
+        if (ok) {
+          showToast('✅ Latest data loaded from cloud', 'success');
+        }
+      } finally {
+        refreshInFlight = false;
+        if (btn) btn.classList.remove('spinning');
+      }
+    }
+    window.refreshFromCloud = refreshFromCloud;
 
     async function cloudPush(silent) {
       if (!currentUser || cloudSyncInFlight) return;
@@ -1544,16 +1684,21 @@
           customers: customers,
           customerCount: customers.length,
           updatedAt: window.FB.serverTimestamp(),
-          appVersion: '1.5-cloud'
+          appVersion: '1.8-cloud-indexeddb'
         }, { merge: true });
         lastPushedHash = JSON.stringify(customers);
-        localStorage.setItem(LAST_LOCAL_UPDATE_KEY, Date.now().toString());
         updateCloudBadge('online', 'Cloud: Synced');
         if (!silent) showToast('☁️ Synced to cloud', 'success');
       } catch (e) {
         console.error('Cloud push failed:', e);
-        updateCloudBadge('offline', 'Cloud: Offline');
-        if (!silent) showToast('Cloud sync failed: ' + e.message, 'error');
+        // With IndexedDB persistence, failed writes are queued and retried automatically.
+        if (!navigator.onLine) {
+          updateCloudBadge('syncing', 'Cloud: Queued (offline)');
+          if (!silent) showToast('📥 Saved offline — will sync when online', 'warning');
+        } else {
+          updateCloudBadge('offline', 'Cloud: Offline');
+          if (!silent) showToast('Cloud sync failed: ' + e.message, 'error');
+        }
       } finally {
         cloudSyncInFlight = false;
       }
@@ -1562,7 +1707,7 @@
     function cloudSchedule() {
       if (!currentUser) return;
       clearTimeout(cloudPushTimer);
-      cloudPushTimer = setTimeout(() => cloudPush(true), 2000);
+      cloudPushTimer = setTimeout(() => cloudPush(true), 1500);
     }
 
     function cloudStartAutoSync() {
@@ -1574,20 +1719,16 @@
           const snap = await window.FB.getDoc(ref);
           if (!snap.exists()) return;
           const cloud = snap.data();
-          const cloudCustomers = cloud.customers || [];
+          const cloudCustomers = Array.isArray(cloud.customers) ? cloud.customers : [];
           const cloudJSON = JSON.stringify(cloudCustomers);
           const localJSON = JSON.stringify(customers);
+
           if (cloudJSON !== localJSON && cloudJSON !== lastPushedHash) {
-            const cloudTime = cloud.updatedAt?.seconds ? cloud.updatedAt.seconds * 1000 : 0;
-            const localTime = parseInt(localStorage.getItem(LAST_LOCAL_UPDATE_KEY) || '0', 10);
-            if (cloudTime > localTime) {
-              customers = cloudCustomers;
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
-              lastPushedHash = cloudJSON;
-              refreshAddressFilter();
-              renderTable();
-              showToast('🔄 Updated from cloud', 'info');
-            }
+            customers = cloudCustomers;
+            lastPushedHash = cloudJSON;
+            refreshAddressFilter();
+            renderTable();
+            showToast('🔄 Updated from cloud', 'info');
           }
         } catch (e) {}
       }, 30000);
@@ -1603,7 +1744,7 @@
     window.__updateCloudBadge = updateCloudBadge;
 
     /* ============================================================
-       GOOGLE SHEETS PUSH (customers)
+       GOOGLE SHEETS PUSH (customers) — secondary cloud backup
        ============================================================ */
     async function syncToGoogleSheets(silent = false) {
       if (!APPS_SCRIPT_URL) { if (!silent) showToast('Google Sheets not configured.', 'error'); return; }
@@ -1688,7 +1829,7 @@
           if (!silent) showToast('No valid customer data found.', 'warning');
           return;
         }
-        if (!confirm(`Pull ${pulledCustomers.length} customers from Google Sheet?\n\nThis will replace all local data. Continue?`)) return;
+        if (!confirm(`Pull ${pulledCustomers.length} customers from Google Sheet?\n\nThis will replace the cloud data. Continue?`)) return;
         customers = pulledCustomers;
         saveData();
         refreshAddressFilter();
@@ -1723,7 +1864,7 @@
     async function sendTelegramBackup() {
       if (!telegramToken || !telegramChatId) { showToast('Telegram not configured.', 'error'); return; }
       if (customers.length === 0) { showToast('No customers to backup.', 'warning'); return; }
-      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.5' };
+      const payload = { customers, timestamp: new Date().toISOString(), count: customers.length, version: '1.8-cloud-indexeddb' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const formData = new FormData();
       formData.append('chat_id', telegramChatId);
@@ -2166,7 +2307,7 @@
       if (!wrap) return;
       const sourceNote = txnOnline
         ? '<div class="info-box" style="margin-bottom:10px;font-size:12px;">🔴 <strong>Live from Google Sheet.</strong> Changes are saved in real time.</div>'
-        : '<div class="info-box-warning" style="margin-bottom:10px;font-size:12px;">⚠️ <strong>Offline.</strong> Showing local data only.</div>';
+        : '<div class="info-box-warning" style="margin-bottom:10px;font-size:12px;">⚠️ <strong>Offline.</strong> Showing in-memory data only.</div>';
       if (filtered.length === 0) {
         wrap.innerHTML = sourceNote + `<div class="txn-empty"><i class="fas fa-receipt"></i>No transactions found.</div>`;
         return;
@@ -2305,6 +2446,10 @@
       });
     }
     function renderTable() {
+      if (currentUser && !cloudReady) {
+        showCloudLoader();
+        return;
+      }
       applyFilters();
       sortFiltered();
       const tbody = document.getElementById('customerTableBody');
@@ -2559,8 +2704,6 @@
     function openEditModal(id) {
       const c = customers.find(x => x.id === id);
       if (!c) return;
-      const addrList = [...FIXED_ADDRESS_LIST, "Other"];
-      const srcList = ["1","2","3","4","5","6","Other"];
       const isCustomAddress = c.address && !FIXED_ADDRESS_LIST.includes(c.address);
       const isCustomSource = c.source && !["1","2","3","4","5","6"].includes(c.source);
       const body = `
@@ -2850,7 +2993,7 @@
       triggerPrint(html);
     }
 
-    /* ============ SAVE REFERENCES FOR PART 4 ============ */
+    /* ============ EXPOSE FOR MODALS ============ */
     window.__app = {
       showToast, triggerPrint, saveData, renderTable, refreshAddressFilter,
       openModal, closeModal, openPreviewModal, openPaymentModal, openEditModal,
@@ -2863,7 +3006,8 @@
       getCurrentUser: () => currentUser,
       cloudPush, getCustomers: () => customers,
       setCustomers: (arr) => { customers = arr; },
-      logTxn, buildTxnRecord, txnApiConfigured, fetchTxnFromSheet
+      logTxn, buildTxnRecord, txnApiConfigured, fetchTxnFromSheet,
+      refreshFromCloud
     };
 
     /* ============================================================
@@ -2993,7 +3137,8 @@
     function openBackupRestoreModal() {
       const body = `
         <div style="margin-bottom:18px;">
-          <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">Download Backup</h3>
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">Download Backup (from memory)</h3>
+          <p class="text-muted" style="font-size:12px;margin-bottom:8px;">Creates a one-time JSON file from the currently-loaded cloud data. Nothing is saved to this device.</p>
           <button class="btn btn-primary" id="downloadBackupBtn"><i class="fas fa-download"></i> Download JSON Backup</button>
           <button class="btn btn-outline" id="openDriveBackupBtn" style="margin-left:8px;"><i class="fab fa-google-drive"></i> Open Drive Backup</button>
         </div>
@@ -3016,7 +3161,7 @@
         URL.revokeObjectURL(url);
         lastBackupDownload = Date.now();
         localStorage.setItem(LAST_LOCAL_DOWNLOAD_KEY, lastBackupDownload);
-        showToast('Backup downloaded.', 'success');
+        showToast('Backup downloaded (not stored on device).', 'success');
       });
       document.getElementById('openDriveBackupBtn').addEventListener('click', () => {
         promptPassword('Enter password for Google Drive Backup', BACKUP_PASSWORD, () => {
@@ -3041,7 +3186,7 @@
               refreshAddressFilter();
               renderTable();
               closeModal();
-              showToast('Data restored & syncing to cloud.', 'success');
+              showToast('Data restored to cloud.', 'success');
             });
           } catch (err) {
             document.getElementById('restorePreview').innerHTML = `<div class="warning-box">Invalid backup file.</div>`;
@@ -3154,7 +3299,7 @@
           <button class="btn btn-outline" id="fullscreenSheetBtn"><i class="fas fa-expand"></i> Fullscreen</button>
         </div>
         <div class="text-muted" style="margin-top:14px;font-size:12px;">
-          ⚠️ Pulling will replace all local data with data from the sheet. Make a backup first.
+          ⚠️ Pulling will replace the cloud data with data from the sheet.
         </div>
       `;
       openModal('Google Sheets Sync', body, '<button class="btn" id="closeSheetPanelBtn">Close</button>', true);
@@ -3174,7 +3319,10 @@
         <div class="info-box" style="margin-bottom:14px;">
           <strong>Logged in as:</strong> ${user ? user.email : 'Unknown'}<br>
           <strong>UID:</strong> <code style="font-size:11px;">${user ? user.uid : '—'}</code><br>
-          <strong>Cloud sync:</strong> <span style="color:var(--success);font-weight:700;">Active</span>
+          <strong>Cloud sync:</strong> <span style="color:var(--success);font-weight:700;">Active</span><br>
+          <strong>Offline cache:</strong> <span style="color:var(--success);font-weight:700;">IndexedDB (Firebase-managed)</span><br>
+          <strong>localStorage customer data:</strong> <span style="color:var(--success);font-weight:700;">None</span><br>
+          <strong>Session persistence:</strong> <span style="color:var(--success);font-weight:700;">Remembered until logout</span>
         </div>
         <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">Admin Password Sheet</h3>
         <table class="official-table" style="width:100%;">
@@ -3202,6 +3350,7 @@
     function handleSidebarAction(action) {
       switch (action) {
         case 'dashboard': renderTable(); break;
+        case 'refreshFromCloud': refreshFromCloud(); break;
         case 'transactionTracking': openTransactionTracking(); break;
         case 'advancedFilter': document.getElementById('advancedFilterRow').classList.toggle('visible'); break;
         case 'liveStats': promptPassword('Enter password for Live Stats', ADMIN_PASSWORDS.summaryAccess, openLiveStats); break;
@@ -3227,10 +3376,10 @@
           break;
         case 'clearAllData':
           promptPassword('Enter master password to clear ALL data', ADMIN_PASSWORDS.clearData, () => {
-            localStorage.removeItem(STORAGE_KEY);
             customers = [];
-            saveData(); refreshAddressFilter(); renderTable();
-            showToast('All data cleared.', 'success');
+            saveData();
+            refreshAddressFilter(); renderTable();
+            showToast('All cloud data cleared.', 'success');
           });
           break;
         case 'shopDetails':
@@ -3249,11 +3398,11 @@
             <p>Email: farhantanzidshiyam@gmail.com</p>
             <p>WhatsApp: +880131932189</p>
             <p>Facebook: <a href="https://web.facebook.com/farhantanzidshiyam" target="_blank">facebook.com/farhantanzidshiyam</a></p>
-            <p>RGCE SparkDesk v1.5 Cloud</p>
+            <p>RGCE SparkDesk v1.8 Cloud + IndexedDB</p>
           `, '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         case 'help':
-          openModal('Help', '<p>Use the sidebar to navigate. Search, filter, add, edit, and manage customer dues. All data is stored locally and synced to your private cloud.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
+          openModal('Help', '<p>Use the sidebar to navigate. Click <strong>Refresh</strong> to pull the latest data from the cloud. Works offline — data is cached locally by Firebase and synced automatically.</p>', '<button class="btn" onclick="closeModal()">Close</button>');
           break;
         default: showToast('Feature coming soon.', 'info');
       }
@@ -3263,11 +3412,11 @@
        ADD FORM HELPERS
        ============================================================ */
     function showAddForm() {
+      if (!currentUser) { showToast('Please login first.', 'warning'); return; }
       const panel = document.getElementById('addCustomerPanel');
       if (!panel) return;
       panel.classList.add('visible');
       formVisible = true;
-      localStorage.setItem('roza_form_state', 'open');
       const nameInput = document.getElementById('custName');
       if (nameInput) nameInput.focus();
     }
@@ -3276,7 +3425,6 @@
       if (!panel) return;
       panel.classList.remove('visible');
       formVisible = false;
-      localStorage.setItem('roza_form_state', 'closed');
     }
     function resetForm() {
       ['custName','custPhone','custCustomAddress','custDue','custPaid','custCustomSource','custNote'].forEach(id => {
@@ -3294,14 +3442,6 @@
     }
 
     /* ============================================================
-       EXPOSE HELPERS FOR PART 5
-       ============================================================ */
-    window.__app2 = {
-      setupAuth, handleSidebarAction, showAddForm, hideAddForm, resetForm,
-      openSummaryReport, openLiveStats, promptPassword, openAdminPanel,
-      openGoogleSheetsPanel
-    };
-        /* ============================================================
        INIT — FIREBASE + DOM READY
        ============================================================ */
     function initFirebase() {
@@ -3311,7 +3451,7 @@
       }
       try {
         setupAuth();
-        console.log('✅ Auth setup complete');
+        console.log('✅ Auth setup complete (v1.8 cloud + IndexedDB)');
         return true;
       } catch (e) {
         console.error('setupAuth failed:', e);
@@ -3319,7 +3459,6 @@
       }
     }
 
-    // Robust init: try immediately, then poll every 100ms
     (function bootstrap() {
       if (window.FB) {
         initFirebase();
@@ -3341,7 +3480,12 @@
     })();
 
     document.addEventListener('DOMContentLoaded', () => {
-      loadData();
+      // 🔒 One-time cleanup: remove any old plaintext customer data from this device
+      try {
+        localStorage.removeItem('roza_gift_corner_customers_v1.5');
+        localStorage.removeItem('rgce_local_updated');
+      } catch (e) {}
+
       loadSearchState();
       pageSize = parseInt(localStorage.getItem('roza_page_size') || '35', 10);
       const ps = document.getElementById('pageSizeSelect');
@@ -3360,8 +3504,6 @@
         document.getElementById('sidebarToggle').textContent = '▶';
       }
 
-      if (localStorage.getItem('roza_form_state') === 'open') showAddForm();
-
       const recDate = document.getElementById('recordDate');
       if (recDate) recDate.textContent = todayDDMMYYYY();
 
@@ -3371,7 +3513,8 @@
       applySearchState();
 
       refreshAddressFilter();
-      renderTable();
+      showCloudLoader();
+      updateFooterStats();
       updateTelegramStatus();
 
       const savedSync = localStorage.getItem(LAST_SYNC_KEY);
@@ -3381,7 +3524,6 @@
         if (el) el.textContent = 'Last Sync: ' + lastSyncTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       }
 
-      // Dark mode
       if (dt) {
         dt.addEventListener('change', (e) => {
           document.body.classList.toggle('dark-mode', e.target.checked);
@@ -3389,7 +3531,6 @@
         });
       }
 
-      // Sidebar toggle
       const sidebarToggle = document.getElementById('sidebarToggle');
       if (sidebarToggle) {
         sidebarToggle.addEventListener('click', () => {
@@ -3401,7 +3542,6 @@
         });
       }
 
-      // Sidebar items
       document.querySelectorAll('.sidebar-item').forEach(item => {
         item.addEventListener('click', () => {
           document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -3410,7 +3550,6 @@
         });
       });
 
-      // Footer links
       document.querySelectorAll('.footer-links a').forEach(link => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
@@ -3418,7 +3557,6 @@
         });
       });
 
-      // Add customer
       const addBtn = document.getElementById('addCustomerTopBtn');
       if (addBtn) addBtn.addEventListener('click', showAddForm);
 
@@ -3451,10 +3589,10 @@
         });
       }
 
-      // Save customer
       const saveCustBtn = document.getElementById('saveCustomerBtn');
       if (saveCustBtn) {
         saveCustBtn.addEventListener('click', () => {
+          if (!currentUser) { showToast('Please login first.', 'warning'); return; }
           const name = document.getElementById('custName').value.trim();
           if (!name) { showToast('Customer name is required.', 'error'); return; }
           const addressVal = document.getElementById('custAddress').value;
@@ -3490,7 +3628,6 @@
         });
       }
 
-      // Search and filters
       const gs = document.getElementById('globalSearch');
       if (gs) gs.addEventListener('input', () => { currentPage = 1; renderTable(); });
 
@@ -3503,7 +3640,6 @@
       const fSource = document.getElementById('filterSource');
       if (fSource) fSource.addEventListener('change', () => { currentPage = 1; renderTable(); });
 
-      // Page size
       const pageSizeSel = document.getElementById('pageSizeSelect');
       if (pageSizeSel) {
         pageSizeSel.addEventListener('change', (e) => {
@@ -3514,14 +3650,12 @@
         });
       }
 
-      // Print buttons
       const pfBtn = document.getElementById('printFilteredBtn');
       if (pfBtn) pfBtn.addEventListener('click', printFilteredReport);
 
       const mrBtn = document.getElementById('manualReportBtn');
       if (mrBtn) mrBtn.addEventListener('click', printManualReport);
 
-      // Table sorting
       document.querySelectorAll('#customerTable th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const col = th.dataset.sort;
@@ -3537,10 +3671,10 @@
         });
       });
 
-      // Backup button
       const downloadTopBtn = document.getElementById('downloadBackupTop');
       if (downloadTopBtn) {
         downloadTopBtn.addEventListener('click', () => {
+          if (!currentUser) { showToast('Login first.', 'warning'); return; }
           const data = JSON.stringify(customers, null, 2);
           const blob = new Blob([data], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
@@ -3565,17 +3699,19 @@
         downloadTopBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> BACKUP DUE';
       }
 
-      // Telegram backup
       const tgBtn = document.getElementById('telegramBackupNow');
       if (tgBtn) tgBtn.addEventListener('click', sendTelegramBackup);
 
-      // Last sync click
       const lastSyncEl = document.getElementById('lastSyncTop');
       if (lastSyncEl) {
         lastSyncEl.addEventListener('click', () => { syncToGoogleSheets(false); });
       }
 
-      // Cloud sync button
+      const refreshBtn = document.getElementById('refreshFromCloudBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshFromCloud);
+      }
+
       const cloudSyncBtn = document.getElementById('forceCloudSyncBtn');
       if (cloudSyncBtn) {
         cloudSyncBtn.addEventListener('click', () => {
@@ -3584,7 +3720,15 @@
         });
       }
 
-      // Admin panel
+      let lastFocusRefresh = 0;
+      window.addEventListener('focus', () => {
+        if (!currentUser) return;
+        const now = Date.now();
+        if (now - lastFocusRefresh < 15000) return;
+        lastFocusRefresh = now;
+        refreshFromCloud();
+      });
+
       const adminLink = document.getElementById('adminPanelLink');
       if (adminLink) {
         adminLink.addEventListener('click', () => {
@@ -3592,13 +3736,11 @@
         });
       }
 
-      // Live clock
       setInterval(() => {
         const el = document.getElementById('liveTimeBadge');
         if (el) el.textContent = new Date().toLocaleTimeString();
       }, 1000);
 
-      // Enter key nav in form
       const addPanel = document.getElementById('addCustomerPanel');
       if (addPanel) {
         addPanel.addEventListener('keydown', (e) => {
@@ -3615,28 +3757,16 @@
         });
       }
 
-      renderTable();
-
-      // Auto daily telegram backup
-      const lastAutoBackup = localStorage.getItem('roza_last_auto_backup');
-      if (customers.length > 0 && (!lastAutoBackup || Date.now() - parseInt(lastAutoBackup, 10) > 86400000)) {
-        if (telegramToken && telegramChatId) {
-          sendTelegramBackup().then(() => {
-            localStorage.setItem('roza_last_auto_backup', Date.now().toString());
-          });
-        }
-      }
-
       setTimeout(() => {
-        showToast('Welcome to RGCE SparkDesk v1.5 Cloud!', 'info');
-      }, 500);
+        showToast('Welcome to RGCE SparkDesk v1.8 — Cloud + Offline cache!', 'info');
+      }, 800);
 
       window.addEventListener('online', () => {
         updateCloudBadge('syncing', 'Reconnecting…');
         if (currentUser) cloudPush(true);
       });
       window.addEventListener('offline', () => {
-        updateCloudBadge('offline', 'Cloud: Offline');
+        updateCloudBadge('syncing', 'Cloud: Cached (offline)');
       });
     });
 
@@ -3646,6 +3776,7 @@
     };
     window.closeModal = closeModal;
     window.showAddForm = showAddForm;
+    window.refreshFromCloud = refreshFromCloud;
     })();
   </script>
 </body>
